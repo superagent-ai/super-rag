@@ -6,7 +6,7 @@ from decouple import config
 from numpy import ndarray
 
 
-class VectorDBService(ABC):
+class VectorService(ABC):
     def __init__(self, index_name: str, dimension: int, filter_id: str = None):
         self.index_name = index_name
         self.filter_id = filter_id
@@ -25,7 +25,7 @@ class VectorDBService(ABC):
         pass
 
 
-class PineconeVectorService(VectorDBService):
+class PineconeVectorService(VectorService):
     def __init__(self, index_name: str, dimension: int, filter_id: str = None):
         super().__init__(
             index_name=index_name, dimension=dimension, filter_id=filter_id

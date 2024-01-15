@@ -1,29 +1,13 @@
-from typing import Dict, List
-from enum import Enum
-from pydantic import BaseModel
+from typing import Dict
 from fastapi import APIRouter
-
+from models.ingest import RequestPayload
+from service.embedding import EmbeddingService
 
 router = APIRouter()
 
 
-class DatabaseType(Enum):
-    qdrant = "qdrant"
-    pinecone = "pinecone"
-    weaviate = "weaviate"
-    astra = "astra"
-
-
-class VectorDatabase(BaseModel):
-    type: DatabaseType
-    config: Dict
-
-
-class RequestPayload(BaseModel):
-    files: List[str]
-    vector_database: VectorDatabase
-
-
 @router.post("/ingest")
 async def ingest(payload: RequestPayload) -> Dict:
-    return payload.model_dump()
+    embeddings = EmbeddingService(files=payload.files, index_name=payload.index_name)
+    documents = await embeddings.generate_documents()
+    return {"success": True, "data": documents}

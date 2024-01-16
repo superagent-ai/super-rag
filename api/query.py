@@ -1,4 +1,3 @@
-from typing import Dict
 from fastapi import APIRouter
 from models.query import RequestPayload, ResponsePayload
 from service.vector_database import get_vector_service, VectorService

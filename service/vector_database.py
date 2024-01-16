@@ -119,12 +119,12 @@ class QdrantService(VectorService):
     async def upsert(self, embeddings: List[tuple[str, list, dict[str, Any]]]):
         points = []
 
-        for embedding in embeddings:
+        for _embedding in embeddings:
             points.append(
                 rest.PointStruct(
-                    id=embedding[0],
-                    vector={"content": embedding[1]},
-                    payload={**embedding[2]},
+                    id=_embedding[0],
+                    vector={"content": _embedding[1]},
+                    payload={**_embedding[2]},
                 )
             )
 

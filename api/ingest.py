@@ -8,6 +8,12 @@ router = APIRouter()
 
 @router.post("/ingest")
 async def ingest(payload: RequestPayload) -> Dict:
-    embeddings = EmbeddingService(files=payload.files, index_name=payload.index_name)
-    documents = await embeddings.generate_documents()
-    return {"success": True, "data": documents}
+    embedding_service = EmbeddingService(
+        files=payload.files,
+        index_name=payload.index_name,
+        vector_credentials=payload.vector_database,
+    )
+    documents = await embedding_service.generate_documents()
+    chunks = await embedding_service.generate_chunks(documents=documents)
+    await embedding_service.generate_embeddings(nodes=chunks)
+    return {"success": True}

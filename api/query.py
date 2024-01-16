@@ -11,6 +11,6 @@ async def query(payload: RequestPayload):
         index_name=payload.index_name, credentials=payload.vector_database
     )
     chunks = await vector_service.query(input=payload.input, top_k=4)
-    documents = await vector_service.convert_to_dict(points=chunks)
+    documents = await vector_service.convert_to_dict(chunks=chunks)
     results = await vector_service.rerank(query=payload.input, documents=documents)
     return {"success": True, "data": results}

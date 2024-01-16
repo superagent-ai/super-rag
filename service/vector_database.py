@@ -1,9 +1,6 @@
-import pinecone
-
 from abc import ABC, abstractmethod
 from typing import Any, List, Type
 from decouple import config
-from numpy import ndarray
 from litellm import embedding
 from qdrant_client import QdrantClient
 from qdrant_client.http import models as rest

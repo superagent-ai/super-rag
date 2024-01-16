@@ -1,9 +1,8 @@
-from typing import Dict, List
-from enum import Enum
-from pydantic import BaseModel
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from decouple import config
+from router import router
+
 
 app = FastAPI(
     title="SuperRag",
@@ -21,24 +20,4 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-
-class DatabaseType(Enum):
-    qdrant = "qdrant"
-    pinecone = "pinecone"
-    weaviate = "weaviate"
-    astra = "astra"
-
-
-class VectorDatabase(BaseModel):
-    type: DatabaseType
-    config: Dict
-
-
-class RequestPayload(BaseModel):
-    files: List
-    vector_database: VectorDatabase
-
-
-@app.post("/ingest")
-async def ingest(payload: RequestPayload) -> Dict:
-    return payload.model_dump()
+app.include_router(router)

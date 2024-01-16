@@ -7,6 +7,8 @@ from numpy import ndarray
 from litellm import embedding
 from qdrant_client import QdrantClient
 from qdrant_client.http import models as rest
+from pinecone import Pinecone, ServerlessSpec
+
 from models.vector_database import VectorDatabase
 
 
@@ -54,33 +56,46 @@ class PineconeVectorService(VectorService):
         super().__init__(
             index_name=index_name, dimension=dimension, credentials=credentials
         )
-        pinecone.init(
-            api_key=credentials["PINECONE_API_KEY"],
-            environment=credentials["PINECONE_ENVIRONMENT"],
-        )
-        # Create a new vector index if it doesn't
-        # exist dimensions should be passed in the arguments
-        if index_name not in pinecone.list_indexes():
+        pinecone = Pinecone(api_key=credentials["api_key"])
+        if index_name not in [index.name for index in pinecone.list_indexes()]:
             pinecone.create_index(
-                name=index_name, metric="cosine", shards=1, dimension=dimension
+                name=self.index_name,
+                dimension=1024,
+                metric="cosine",
+                spec=ServerlessSpec(cloud="aws", region="us-west-2"),
             )
-        self.index = pinecone.Index(index_name=self.index_name)
+        self.index = pinecone.Index(name=self.index_name)
 
-    async def convert_to_dict(self, documents: list):
-        pass
+    async def convert_to_dict(self, chunks: List):
+        docs = [
+            {
+                "content": chunk.get("metadata")["content"],
+                "page_label": chunk.get("metadata")["page_label"],
+                "file_url": chunk.get("metadata")["file_url"],
+            }
+            for chunk in chunks
+        ]
+        return docs
 
     async def upsert(self, embeddings: List[tuple[str, list, dict[str, Any]]]):
         self.index.upsert(vectors=embeddings)
 
-    async def query(
-        self, queries: List[ndarray], top_k: int, include_metadata: bool = True
-    ):
+    async def query(self, input: str, top_k: 4, include_metadata: bool = True):
+        vectors = []
+        embedding_object = embedding(
+            model="huggingface/intfloat/multilingual-e5-large",
+            input=input,
+            api_key=config("HUGGINGFACE_API_KEY"),
+        )
+        for vector in embedding_object.data:
+            if vector["object"] == "embedding":
+                vectors.append(vector["embedding"])
         results = self.index.query(
-            queries=queries,
+            vector=vectors,
             top_k=top_k,
             include_metadata=include_metadata,
         )
-        return results["results"][0]["matches"]
+        return results["matches"]
 
 
 class QdrantService(VectorService):
@@ -105,14 +120,14 @@ class QdrantService(VectorService):
                 ),
             )
 
-    async def convert_to_dict(self, points: List[rest.PointStruct]):
+    async def convert_to_dict(self, chunks: List[rest.PointStruct]):
         docs = [
             {
-                "content": point.payload.get("content"),
-                "page_label": point.payload.get("page_label"),
-                "file_url": point.payload.get("file_url"),
+                "content": chunk.payload.get("content"),
+                "page_label": chunk.payload.get("page_label"),
+                "file_url": chunk.payload.get("file_url"),
             }
-            for point in points
+            for chunk in chunks
         ]
         return docs
 

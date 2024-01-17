@@ -12,5 +12,8 @@ async def query(payload: RequestPayload):
     )
     chunks = await vector_service.query(input=payload.input, top_k=4)
     documents = await vector_service.convert_to_rerank_format(chunks=chunks)
-    results = await vector_service.rerank(query=payload.input, documents=documents)
-    return {"success": True, "data": results}
+    if len(documents):
+        documents = await vector_service.rerank(
+            query=payload.input, documents=documents
+        )
+    return {"success": True, "data": documents}

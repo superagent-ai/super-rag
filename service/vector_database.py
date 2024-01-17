@@ -113,6 +113,9 @@ class PineconeVectorService(VectorService):
         )
         return results["matches"]
 
+    async def delete(self, file_url: str) -> None:
+        self.index.delete(filter={"file_url": {"$eq": file_url}})
+
 
 class QdrantService(VectorService):
     def __init__(self, index_name: str, dimension: int, credentials: dict):
@@ -187,6 +190,20 @@ class QdrantService(VectorService):
         )
         return search_result
 
+    async def delete(self, file_url: str) -> None:
+        self.client.delete(
+            collection_name=self.index_name,
+            points_selector=rest.FilterSelector(
+                filter=rest.Filter(
+                    must=[
+                        rest.FieldCondition(
+                            key="file_url", match=rest.MatchValue(value=file_url)
+                        )
+                    ]
+                )
+            ),
+        )
+
 
 class WeaviateService(VectorService):
     def __init__(self, index_name: str, dimension: int, credentials: dict):
@@ -245,6 +262,12 @@ class WeaviateService(VectorService):
             .do()
         )
         return result["data"]["Get"][self.index_name.capitalize()]
+
+    async def delete(self, file_url: str) -> None:
+        self.client.batch.delete_objects(
+            class_name=self.index_name,
+            where={"path": ["file_url"], "operator": "Equal", "valueText": file_url},
+        )
 
 
 class AstraService(VectorService):

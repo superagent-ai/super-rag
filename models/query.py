@@ -1,5 +1,5 @@
 from pydantic import BaseModel
-from typing import List
+from typing import List, Optional
 from models.vector_database import VectorDatabase
 
 
@@ -12,7 +12,7 @@ class RequestPayload(BaseModel):
 class ResponseData(BaseModel):
     content: str
     file_url: str
-    page_label: str
+    page_label: Optional[str]
 
 
 class ResponsePayload(BaseModel):

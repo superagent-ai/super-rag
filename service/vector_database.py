@@ -152,7 +152,7 @@ class QdrantService(VectorService):
 
     async def upsert(self, embeddings: List[tuple[str, list, dict[str, Any]]]) -> None:
         points = []
-
+        print(embeddings)
         for _embedding in embeddings:
             points.append(
                 rest.PointStruct(

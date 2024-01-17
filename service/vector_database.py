@@ -30,6 +30,10 @@ class VectorService(ABC):
     async def convert_to_rerank_format():
         pass
 
+    @abstractmethod
+    async def delete(self, file_url: str):
+        pass
+
     async def _generate_vectors(sefl, input: str):
         vectors = []
         embedding_object = embedding(
@@ -289,6 +293,9 @@ class AstraService(VectorService):
             vector=vectors, limit=top_k, fields={"text", "page_label", "file_url"}
         )
         return results
+
+    async def delete(self, file_url: str) -> None:
+        self.collection.delete_many(filter={"file_url": file_url})
 
 
 def get_vector_service(

@@ -30,6 +30,10 @@ class VectorService(ABC):
     async def convert_to_rerank_format():
         pass
 
+    @abstractmethod
+    async def delete(self, file_url: str):
+        pass
+
     async def _generate_vectors(sefl, input: str):
         vectors = []
         embedding_object = embedding(
@@ -109,6 +113,9 @@ class PineconeVectorService(VectorService):
         )
         return results["matches"]
 
+    async def delete(self, file_url: str) -> None:
+        self.index.delete(filter={"file_url": {"$eq": file_url}})
+
 
 class QdrantService(VectorService):
     def __init__(self, index_name: str, dimension: int, credentials: dict):
@@ -183,6 +190,20 @@ class QdrantService(VectorService):
         )
         return search_result
 
+    async def delete(self, file_url: str) -> None:
+        self.client.delete(
+            collection_name=self.index_name,
+            points_selector=rest.FilterSelector(
+                filter=rest.Filter(
+                    must=[
+                        rest.FieldCondition(
+                            key="file_url", match=rest.MatchValue(value=file_url)
+                        )
+                    ]
+                )
+            ),
+        )
+
 
 class WeaviateService(VectorService):
     def __init__(self, index_name: str, dimension: int, credentials: dict):
@@ -242,6 +263,12 @@ class WeaviateService(VectorService):
         )
         return result["data"]["Get"][self.index_name.capitalize()]
 
+    async def delete(self, file_url: str) -> None:
+        self.client.batch.delete_objects(
+            class_name=self.index_name,
+            where={"path": ["file_url"], "operator": "Equal", "valueText": file_url},
+        )
+
 
 class AstraService(VectorService):
     def __init__(self, index_name: str, dimension: int, credentials: dict):
@@ -289,6 +316,9 @@ class AstraService(VectorService):
             vector=vectors, limit=top_k, fields={"text", "page_label", "file_url"}
         )
         return results
+
+    async def delete(self, file_url: str) -> None:
+        self.collection.delete_many(filter={"file_url": file_url})
 
 
 def get_vector_service(

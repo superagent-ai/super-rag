@@ -7,6 +7,7 @@ from litellm import embedding
 from qdrant_client import QdrantClient
 from qdrant_client.http import models as rest
 from pinecone import Pinecone, ServerlessSpec
+from astrapy.db import AstraDB
 
 from models.vector_database import VectorDatabase
 
@@ -242,6 +243,54 @@ class WeaviateService(VectorService):
         return result["data"]["Get"][self.index_name.capitalize()]
 
 
+class AstraService(VectorService):
+    def __init__(self, index_name: str, dimension: int, credentials: dict):
+        super().__init__(
+            index_name=index_name, dimension=dimension, credentials=credentials
+        )
+        self.client = AstraDB(
+            token=credentials["api_key"],
+            api_endpoint=credentials["host"],
+        )
+        collections = self.client.get_collections()
+        if self.index_name not in collections["status"]["collections"]:
+            self.collection = self.client.create_collection(
+                dimension=dimension, collection_name=index_name
+            )
+        self.collection = self.client.collection(collection_name=self.index_name)
+
+    async def convert_to_rerank_format(self, chunks: List) -> List:
+        docs = [
+            {
+                "content": chunk.get("text"),
+                "page_label": chunk.get("page_label"),
+                "file_url": chunk.get("file_url"),
+            }
+            for chunk in chunks
+        ]
+        return docs
+
+    async def upsert(self, embeddings: List[tuple[str, list, dict[str, Any]]]) -> None:
+        documents = [
+            {
+                "_id": _embedding[0],
+                "text": _embedding[2]["content"],
+                "$vector": _embedding[1],
+                **_embedding[2],
+            }
+            for _embedding in embeddings
+        ]
+        for i in range(0, len(documents), 5):
+            self.collection.insert_many(documents=documents[i : i + 5])
+
+    async def query(self, input: str, top_k: int = 4) -> List:
+        vectors = await self._generate_vectors(input=input)
+        results = self.collection.vector_find(
+            vector=vectors, limit=top_k, fields={"text", "page_label", "file_url"}
+        )
+        return results
+
+
 def get_vector_service(
     index_name: str, credentials: VectorDatabase, dimension: int = 1024
 ) -> Type[VectorService]:
@@ -249,6 +298,7 @@ def get_vector_service(
         "pinecone": PineconeVectorService,
         "qdrant": QdrantService,
         "weaviate": WeaviateService,
+        "astra": AstraService,
         # Add other providers here
         # e.g "weaviate": WeaviateVectorService,
     }

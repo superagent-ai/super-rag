@@ -7,8 +7,6 @@ class FileType(Enum):
     docx = "DOCX"
     txt = "TXT"
     pptx = "PPTX"
-    csv = "CSV"
-    xlsx = "XLSX"
     md = "MARKDOWN"
 
 

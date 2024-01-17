@@ -20,6 +20,7 @@ dataclasses-json==0.6.3
 Deprecated==1.2.14
 distro==1.9.0
 dnspython==2.4.2
+docx2txt==0.8
 fastapi==0.109.0
 fastavro==1.9.3
 filelock==3.13.1

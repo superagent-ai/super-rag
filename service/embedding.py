@@ -18,7 +18,7 @@ class EmbeddingService:
         self.vector_credentials = vector_credentials
 
     def _get_datasource_suffix(self, type: str) -> str:
-        suffixes = {"TXT": ".txt", "PDF": ".pdf", "MARKDOWN": ".md"}
+        suffixes = {"TXT": ".txt", "PDF": ".pdf", "MARKDOWN": ".md", "DOCX": ".docx"}
         try:
             return suffixes[type]
         except KeyError:

@@ -1,8 +1,11 @@
+import requests
+
 from typing import Dict
 from fastapi import APIRouter, Depends
 from models.ingest import RequestPayload
 from service.embedding import EmbeddingService
 from auth.user import get_current_api_user
+
 
 router = APIRouter()
 
@@ -19,4 +22,10 @@ async def ingest(
     documents = await embedding_service.generate_documents()
     chunks = await embedding_service.generate_chunks(documents=documents)
     await embedding_service.generate_embeddings(nodes=chunks)
+
+    if payload.webhook_url:
+        requests.post(
+            url=payload.webhook_url,
+            json={"index_name": payload.index_name, "status": "completed"},
+        )
     return {"success": True}

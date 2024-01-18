@@ -1,12 +1,13 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends
 from models.query import RequestPayload, ResponsePayload
 from service.vector_database import get_vector_service, VectorService
+from auth.user import get_current_api_user
 
 router = APIRouter()
 
 
 @router.post("/query", response_model=ResponsePayload)
-async def query(payload: RequestPayload):
+async def query(payload: RequestPayload, _api_user=Depends(get_current_api_user)):
     vector_service: VectorService = get_vector_service(
         index_name=payload.index_name, credentials=payload.vector_database
     )

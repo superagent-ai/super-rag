@@ -23,7 +23,6 @@ async def get_current_api_user(
     authorization: HTTPAuthorizationCredentials = Security(security),
 ):
     token = authorization.credentials
-    print("TOKEN", token)
     decoded_token = decode_jwt(token)
     superagent = AsyncSuperagent(
         base_url="https://api.beta.superagent.sh", token=decoded_token

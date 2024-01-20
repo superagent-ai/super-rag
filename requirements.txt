@@ -30,6 +30,7 @@ geomet==0.2.1.post1
 greenlet==3.0.3
 grpcio==1.60.0
 grpcio-tools==1.60.0
+gunicorn==21.2.0
 h11==0.14.0
 h2==4.1.0
 hpack==4.0.0

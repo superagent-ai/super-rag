@@ -14,4 +14,4 @@ RUN pip install --no-cache-dir -r requirements.txt
 ENV PORT="8080"
 
 # Run app.py when the container launches
-CMD exec gunicorn --bind :$PORT --workers 2 --timeout 0  --worker-class uvicorn.workers.UvicornWorker  --threads 8 app.main:app
+CMD exec gunicorn --bind :$PORT --workers 2 --timeout 0  --worker-class uvicorn.workers.UvicornWorker  --threads 8 main:app

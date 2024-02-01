@@ -1,6 +1,6 @@
 # SuperRag
 
-SuperRag acts as Superagents RAG pipeline for unstructured data.
+Super-performant RAG pipeline for AI Agents/Assistants. 
 
 ## API
 

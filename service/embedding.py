@@ -1,13 +1,14 @@
-import requests
 import asyncio
-
-from typing import Any, List, Union
 from tempfile import NamedTemporaryFile
+from typing import Any, List, Union
+
+import numpy as np
+import requests
+from fastembed.embedding import FlagEmbedding as Embedding
 from llama_index import Document, SimpleDirectoryReader
 from llama_index.node_parser import SimpleNodeParser
-from litellm import aembedding
+
 from models.file import File
-from decouple import config
 from service.vector_database import get_vector_service
 
 
@@ -58,18 +59,13 @@ class EmbeddingService:
     ) -> List[tuple[str, list, dict[str, Any]]]:
         async def generate_embedding(node):
             if node is not None:
-                vectors = []
-                embedding_object = await aembedding(
-                    model="huggingface/intfloat/multilingual-e5-large",
-                    input=node.text,
-                    api_key=config("HUGGINGFACE_API_KEY"),
+                embedding_model = Embedding(
+                    model_name="sentence-transformers/all-MiniLM-L6-v2", max_length=512
                 )
-                for vector in embedding_object.data:
-                    if vector["object"] == "embedding":
-                        vectors.append(vector["embedding"])
+                embeddings: List[np.ndarray] = list(embedding_model.embed(node.text))
                 embedding = (
                     node.id_,
-                    vectors,
+                    embeddings[0].tolist(),
                     {
                         **node.metadata,
                         "content": node.text,

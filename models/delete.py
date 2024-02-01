@@ -1,4 +1,5 @@
 from pydantic import BaseModel
+
 from models.vector_database import VectorDatabase
 
 

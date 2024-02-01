@@ -1,9 +1,10 @@
 import weaviate
+import numpy as np
 
 from abc import ABC, abstractmethod
 from typing import Any, List, Type
+from fastembed.embedding import FlagEmbedding as Embedding
 from decouple import config
-from litellm import embedding
 from qdrant_client import QdrantClient
 from qdrant_client.http import models as rest
 from pinecone import Pinecone, ServerlessSpec
@@ -35,16 +36,11 @@ class VectorService(ABC):
         pass
 
     async def _generate_vectors(sefl, input: str):
-        vectors = []
-        embedding_object = embedding(
-            model="huggingface/intfloat/multilingual-e5-large",
-            input=input,
-            api_key=config("HUGGINGFACE_API_KEY"),
+        embedding_model = Embedding(
+            model_name="sentence-transformers/all-MiniLM-L6-v2", max_length=512
         )
-        for vector in embedding_object.data:
-            if vector["object"] == "embedding":
-                vectors.append(vector["embedding"])
-        return vectors
+        embeddings: List[np.ndarray] = list(embedding_model.embed(input))
+        return embeddings[0].tolist()
 
     async def rerank(self, query: str, documents: list, top_n: int = 4):
         from cohere import Client
@@ -97,15 +93,7 @@ class PineconeVectorService(VectorService):
         self.index.upsert(vectors=embeddings)
 
     async def query(self, input: str, top_k: 4, include_metadata: bool = True):
-        vectors = []
-        embedding_object = embedding(
-            model="huggingface/intfloat/multilingual-e5-large",
-            input=input,
-            api_key=config("HUGGINGFACE_API_KEY"),
-        )
-        for vector in embedding_object.data:
-            if vector["object"] == "embedding":
-                vectors.append(vector["embedding"])
+        vectors = await self._generate_vectors(input=input)
         results = self.index.query(
             vector=vectors,
             top_k=top_k,
@@ -164,15 +152,7 @@ class QdrantService(VectorService):
         self.client.upsert(collection_name=self.index_name, wait=True, points=points)
 
     async def query(self, input: str, top_k: int) -> List:
-        vectors = []
-        embedding_object = embedding(
-            model="huggingface/intfloat/multilingual-e5-large",
-            input=input,
-            api_key=config("HUGGINGFACE_API_KEY"),
-        )
-        for vector in embedding_object.data:
-            if vector["object"] == "embedding":
-                vectors.append(vector["embedding"])
+        vectors = await self._generate_vectors(input=input)
         search_result = self.client.search(
             collection_name=self.index_name,
             query_vector=("content", vectors),

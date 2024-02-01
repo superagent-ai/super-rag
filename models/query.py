@@ -17,4 +17,4 @@ class ResponseData(BaseModel):
 
 class ResponsePayload(BaseModel):
     success: bool
-    data: List[ResponseData]
+    data: List

@@ -1,15 +1,14 @@
-import requests
 import asyncio
-import numpy as np
-
-from typing import Any, List, Union
 from tempfile import NamedTemporaryFile
+from typing import Any, List, Union
+
+import numpy as np
+import requests
+from fastembed.embedding import FlagEmbedding as Embedding
 from llama_index import Document, SimpleDirectoryReader
 from llama_index.node_parser import SimpleNodeParser
-from fastembed.embedding import FlagEmbedding as Embedding
 
 from models.file import File
-from decouple import config
 from service.vector_database import get_vector_service
 
 

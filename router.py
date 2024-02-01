@@ -1,6 +1,6 @@
 from fastapi import APIRouter
 
-from api import ingest, query, delete
+from api import delete, ingest, query
 
 router = APIRouter()
 api_prefix = "/api/v1"

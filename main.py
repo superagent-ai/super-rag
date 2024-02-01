@@ -1,8 +1,8 @@
+from decouple import config
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from decouple import config
-from router import router
 
+from router import router
 
 app = FastAPI(
     title="SuperRag",

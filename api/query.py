@@ -1,7 +1,8 @@
 from fastapi import APIRouter, Depends
-from models.query import RequestPayload, ResponsePayload
-from service.vector_database import get_vector_service, VectorService
+
 from auth.user import get_current_api_user
+from models.query import RequestPayload, ResponsePayload
+from service.vector_database import VectorService, get_vector_service
 
 router = APIRouter()
 

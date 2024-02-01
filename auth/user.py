@@ -1,6 +1,6 @@
 import logging
-import jwt
 
+import jwt
 from decouple import config
 from fastapi import HTTPException, Security
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer

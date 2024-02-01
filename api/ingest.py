@@ -1,11 +1,11 @@
-import requests
-
 from typing import Dict
+
+import requests
 from fastapi import APIRouter, Depends
+
+from auth.user import get_current_api_user
 from models.ingest import RequestPayload
 from service.embedding import EmbeddingService
-from auth.user import get_current_api_user
-
 
 router = APIRouter()
 

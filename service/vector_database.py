@@ -9,6 +9,7 @@ from fastembed.embedding import FlagEmbedding as Embedding
 from pinecone import Pinecone, ServerlessSpec
 from qdrant_client import QdrantClient
 from qdrant_client.http import models as rest
+from tqdm import tqdm
 
 from models.vector_database import VectorDatabase
 
@@ -49,7 +50,7 @@ class VectorService(ABC):
         if not api_key:
             raise ValueError("API key for Cohere is not present.")
         cohere_client = Client(api_key=api_key)
-        docs = [doc["content"] for doc in documents]
+        docs = [doc["content"] for doc in tqdm(documents, desc="Reranking")]
         re_ranked = cohere_client.rerank(
             model="rerank-multilingual-v2.0",
             query=query,
@@ -57,7 +58,7 @@ class VectorService(ABC):
             top_n=top_n,
         ).results
         results = []
-        for r in re_ranked:
+        for r in tqdm(re_ranked, desc="Processing reranked results"):
             doc = documents[r.index]
             results.append(doc)
         return results
@@ -90,7 +91,7 @@ class PineconeVectorService(VectorService):
         return docs
 
     async def upsert(self, embeddings: List[tuple[str, list, dict[str, Any]]]):
-        self.index.upsert(vectors=embeddings)
+        self.index.upsert(vectors=tqdm(embeddings, desc="Upserting to Pinecone"))
 
     async def query(self, input: str, top_k: 4, include_metadata: bool = True):
         vectors = await self._generate_vectors(input=input)
@@ -140,7 +141,7 @@ class QdrantService(VectorService):
 
     async def upsert(self, embeddings: List[tuple[str, list, dict[str, Any]]]) -> None:
         points = []
-        for _embedding in embeddings:
+        for _embedding in tqdm(embeddings, desc="Upserting to Qdrant"):
             points.append(
                 rest.PointStruct(
                     id=_embedding[0],
@@ -218,7 +219,7 @@ class WeaviateService(VectorService):
 
     async def upsert(self, embeddings: List[tuple[str, list, dict[str, Any]]]) -> None:
         with self.client.batch as batch:
-            for _embedding in embeddings:
+            for _embedding in tqdm(embeddings, desc="Upserting to Weaviate"):
                 params = {
                     "uuid": _embedding[0],
                     "data_object": {"text": _embedding[2]["content"], **_embedding[2]},
@@ -284,7 +285,7 @@ class AstraService(VectorService):
                 "$vector": _embedding[1],
                 **_embedding[2],
             }
-            for _embedding in embeddings
+            for _embedding in tqdm(embeddings, desc="Upserting to Astra")
         ]
         for i in range(0, len(documents), 5):
             self.collection.insert_many(documents=documents[i : i + 5])

@@ -1,9 +1,9 @@
 from typing import Dict
 
 import requests
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter
 
-from auth.user import get_current_api_user
+
 from models.ingest import RequestPayload
 from service.embedding import EmbeddingService
 
@@ -11,9 +11,7 @@ router = APIRouter()
 
 
 @router.post("/ingest")
-async def ingest(
-    payload: RequestPayload, _api_user=Depends(get_current_api_user)
-) -> Dict:
+async def ingest(payload: RequestPayload) -> Dict:
     embedding_service = EmbeddingService(
         files=payload.files,
         index_name=payload.index_name,
@@ -28,4 +26,4 @@ async def ingest(
             url=payload.webhook_url,
             json={"index_name": payload.index_name, "status": "completed"},
         )
-    return {"success": True}
+    return {"success": True, "index_name": payload.index_name}

@@ -4,6 +4,7 @@ from typing import Any, List, Union
 
 import numpy as np
 import requests
+from tqdm import tqdm
 from fastembed.embedding import FlagEmbedding as Embedding
 from llama_index import Document, SimpleDirectoryReader
 from llama_index.node_parser import SimpleNodeParser
@@ -33,7 +34,7 @@ class EmbeddingService:
 
     async def generate_documents(self) -> List[Document]:
         documents = []
-        for file in self.files:
+        for file in tqdm(self.files, desc="Generating documents"):
             suffix = self._get_datasource_suffix(file.type.value)
             with NamedTemporaryFile(suffix=suffix, delete=True) as temp_file:
                 response = requests.get(url=file.url)
@@ -57,6 +58,8 @@ class EmbeddingService:
         self,
         nodes: List[Union[Document, None]],
     ) -> List[tuple[str, list, dict[str, Any]]]:
+        pbar = tqdm(total=len(nodes), desc="Generating embeddings")
+
         async def generate_embedding(node):
             if node is not None:
                 embedding_model = Embedding(
@@ -71,10 +74,12 @@ class EmbeddingService:
                         "content": node.text,
                     },
                 )
+                pbar.update()
                 return embedding
 
         tasks = [generate_embedding(node) for node in nodes]
         embeddings = await asyncio.gather(*tasks)
+        pbar.close()
         vector_service = get_vector_service(
             index_name=self.index_name, credentials=self.vector_credentials
         )

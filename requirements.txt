@@ -16,6 +16,7 @@ charset-normalizer==3.3.2
 click==8.1.7
 cohere==4.42
 coloredlogs==15.0.1
+colorlog==6.8.2
 cryptography==41.0.7
 dataclasses-json==0.6.3
 Deprecated==1.2.14
@@ -61,7 +62,7 @@ nltk==3.8.1
 numpy==1.26.3
 onnx==1.15.0
 onnxruntime==1.17.0
-openai==1.7.2
+openai==1.10.0
 packaging==23.2
 pandas==2.1.4
 pathspec==0.12.1
@@ -71,8 +72,8 @@ platformdirs==4.1.0
 portalocker==2.8.2
 protobuf==4.25.2
 pycparser==2.21
-pydantic==2.4.2
-pydantic_core==2.10.1
+pydantic==2.6.0
+pydantic_core==2.16.1
 PyJWT==2.8.0
 pypdf==3.17.4
 python-dateutil==2.8.2
@@ -86,12 +87,12 @@ regex==2023.12.25
 requests==2.31.0
 ruff==0.1.13
 safetensors==0.4.1
+semantic-router==0.0.20
 six==1.16.0
 sniffio==1.3.0
 soupsieve==2.5
 SQLAlchemy==2.0.25
 starlette==0.35.1
-superagent-py==0.1.55
 sympy==1.12
 tenacity==8.2.3
 tiktoken==0.5.2

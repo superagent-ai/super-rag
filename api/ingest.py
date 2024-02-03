@@ -3,7 +3,6 @@ from typing import Dict
 import requests
 from fastapi import APIRouter
 
-
 from models.ingest import RequestPayload
 from service.embedding import EmbeddingService
 

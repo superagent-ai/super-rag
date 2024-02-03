@@ -4,10 +4,10 @@ from typing import Any, List, Union
 
 import numpy as np
 import requests
-from tqdm import tqdm
 from fastembed.embedding import FlagEmbedding as Embedding
 from llama_index import Document, SimpleDirectoryReader
 from llama_index.node_parser import SimpleNodeParser
+from tqdm import tqdm
 
 from models.file import File
 from service.vector_database import get_vector_service

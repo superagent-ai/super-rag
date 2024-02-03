@@ -1,8 +1,10 @@
 from typing import List
-from semantic_router.route import Route
+
+from decouple import config
 from semantic_router.encoders import CohereEncoder
 from semantic_router.layer import RouteLayer
-from decouple import config
+from semantic_router.route import Route
+
 from models.query import RequestPayload
 from service.vector_database import VectorService, get_vector_service
 

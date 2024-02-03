@@ -1,6 +1,5 @@
 from fastapi import APIRouter
 
-
 from models.delete import RequestPayload, ResponsePayload
 from service.vector_database import VectorService, get_vector_service
 

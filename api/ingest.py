@@ -18,6 +18,8 @@ async def ingest(payload: RequestPayload) -> Dict:
     )
     documents = await embedding_service.generate_documents()
     chunks = await embedding_service.generate_chunks(documents=documents)
+    summaries = await embedding_service.summaries(documents=documents)
+    return {"success": True}
     await embedding_service.generate_embeddings(nodes=chunks)
 
     if payload.webhook_url:

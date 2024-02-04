@@ -11,6 +11,7 @@ from tqdm import tqdm
 
 from models.file import File
 from service.vector_database import get_vector_service
+from utils.openrouter import completion
 
 
 class EmbeddingService:
@@ -86,3 +87,7 @@ class EmbeddingService:
         await vector_service.upsert(embeddings=[e for e in embeddings if e is not None])
 
         return [e for e in embeddings if e is not None]
+
+    async def summaries(self, documents: List[Document]) -> str:
+        for document in documents:
+            summary = await completion(document=document)

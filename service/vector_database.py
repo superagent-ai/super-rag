@@ -5,7 +5,7 @@ import numpy as np
 import weaviate
 from astrapy.db import AstraDB
 from decouple import config
-from fastembed.embedding import FlagEmbedding as Embedding
+from fastembed import TextEmbedding
 from pinecone import Pinecone, ServerlessSpec
 from qdrant_client import QdrantClient
 from qdrant_client.http import models as rest
@@ -37,8 +37,8 @@ class VectorService(ABC):
         pass
 
     async def _generate_vectors(sefl, input: str):
-        embedding_model = Embedding(
-            model_name="sentence-transformers/all-MiniLM-L6-v2", max_length=512
+        embedding_model = TextEmbedding(
+            model_name="sentence-transformers/all-MiniLM-L6-v2"
         )
         embeddings: List[np.ndarray] = list(embedding_model.embed(input))
         return embeddings[0].tolist()

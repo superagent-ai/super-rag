@@ -1,9 +1,7 @@
 import asyncio
-import aiohttp
-
 from typing import Dict
 
-import requests
+import aiohttp
 from fastapi import APIRouter
 
 from models.ingest import RequestPayload

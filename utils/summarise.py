@@ -1,6 +1,6 @@
 from decouple import config
-from openai import AsyncOpenAI
 from llama_index import Document
+from openai import AsyncOpenAI
 
 client = AsyncOpenAI(
     api_key=config("OPENAI_API_KEY"),

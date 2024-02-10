@@ -1,8 +1,7 @@
 import asyncio
 import copy
-
 from tempfile import NamedTemporaryFile
-from typing import Any, List, Union, Optional
+from typing import Any, List, Optional, Union
 
 import numpy as np
 import requests

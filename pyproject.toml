@@ -1,0 +1,58 @@
+[tool.poetry]
+name = "super-rag"
+version = "0.0.2"
+description = ""
+authors = ["Ismail Pelaseyed"]
+readme = "README.md"
+packages = [{include = "main.py"}]
+
+[tool.poetry.dependencies]
+python = ">=3.9,<3.13"
+fastapi = "^0.109.2"
+uvicorn = "^0.27.1"
+weaviate-client = "^3.26.0"
+llama-index = "^0.9.46"
+pinecone-client = "^3.0.2"
+qdrant-client = "^1.7.3"
+ruff = "^0.2.1"
+black = "^23.12.1"
+flake8 = "^7.0.0"
+vulture = "^2.11"
+python-decouple = "^3.8"
+semantic-router = "^0.0.20"
+astrapy = "^0.7.4"
+openai = "^1.12.0"
+tqdm = "^4.66.2"
+cohere = "^4.46"
+cmake = "^3.28.1"
+fastembed = "^0.2.1"
+pypdf = "^4.0.1"
+docx2txt = "^0.8"
+
+[tool.poetry.extras]
+fastembed = ["fastembed"]
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+
+
+[tool.vulture]
+exclude = [
+    "*/test_*.py",
+    "*/.venv/*.py",
+]
+ignore_decorators = ["@app.route", "@require_*"]
+ignore_names = ["visit_*", "do_*"]
+make_whitelist = true
+min_confidence = 100
+paths = ["."]
+sort_by_size = true
+verbose = false
+
+[tool.ruff]
+exclude = [
+    "*/docs/*.py",
+    "*/test_*.py",
+    "*/.venv/*.py",
+]

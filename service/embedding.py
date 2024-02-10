@@ -5,7 +5,7 @@ from typing import Any, List, Optional, Union
 
 import numpy as np
 import requests
-from fastembed.embedding import FlagEmbedding as Embedding
+from fastembed import TextEmbedding
 from llama_index import Document, SimpleDirectoryReader
 from llama_index.node_parser import SimpleNodeParser
 from tqdm import tqdm
@@ -27,7 +27,6 @@ class EmbeddingService:
             "PDF": ".pdf",
             "MARKDOWN": ".md",
             "DOCX": ".docx",
-            "PPTX": ".pptx",
         }
         try:
             return suffixes[type]
@@ -63,8 +62,8 @@ class EmbeddingService:
 
         async def generate_embedding(node):
             if node is not None:
-                embedding_model = Embedding(
-                    model_name="sentence-transformers/all-MiniLM-L6-v2", max_length=512
+                embedding_model = TextEmbedding(
+                    model_name="sentence-transformers/all-MiniLM-L6-v2"
                 )
                 embeddings: List[np.ndarray] = list(embedding_model.embed(node.text))
                 embedding = (

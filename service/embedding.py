@@ -1,6 +1,8 @@
 import asyncio
+import copy
+
 from tempfile import NamedTemporaryFile
-from typing import Any, List, Union
+from typing import Any, List, Union, Optional
 
 import numpy as np
 import requests
@@ -11,7 +13,7 @@ from tqdm import tqdm
 
 from models.file import File
 from service.vector_database import get_vector_service
-from utils.openrouter import completion
+from utils.summarise import completion
 
 
 class EmbeddingService:
@@ -38,9 +40,9 @@ class EmbeddingService:
         for file in tqdm(self.files, desc="Generating documents"):
             suffix = self._get_datasource_suffix(file.type.value)
             with NamedTemporaryFile(suffix=suffix, delete=True) as temp_file:
-                response = requests.get(url=file.url)
-                temp_file.write(response.content)
-                temp_file.flush()
+                with requests.get(url=file.url) as response:  # Add context manager here
+                    temp_file.write(response.content)
+                    temp_file.flush()
                 reader = SimpleDirectoryReader(input_files=[temp_file.name])
                 docs = reader.load_data()
                 for doc in docs:
@@ -56,8 +58,7 @@ class EmbeddingService:
         return nodes
 
     async def generate_embeddings(
-        self,
-        nodes: List[Union[Document, None]],
+        self, nodes: List[Union[Document, None]], index_name: Optional[str] = None
     ) -> List[tuple[str, list, dict[str, Any]]]:
         pbar = tqdm(total=len(nodes), desc="Generating embeddings")
 
@@ -82,12 +83,22 @@ class EmbeddingService:
         embeddings = await asyncio.gather(*tasks)
         pbar.close()
         vector_service = get_vector_service(
-            index_name=self.index_name, credentials=self.vector_credentials
+            index_name=index_name or self.index_name,
+            credentials=self.vector_credentials,
         )
         await vector_service.upsert(embeddings=[e for e in embeddings if e is not None])
 
         return [e for e in embeddings if e is not None]
 
-    async def summaries(self, documents: List[Document]) -> str:
+    async def generate_summary_documents(
+        self, documents: List[Document]
+    ) -> List[Document]:
+        pbar = tqdm(total=len(documents), desc="Summarizing documents")
+        summary_documents = []
         for document in documents:
-            summary = await completion(document=document)
+            doc_copy = copy.deepcopy(document)  # Make a copy of the document
+            doc_copy.text = await completion(document=doc_copy)
+            summary_documents.append(doc_copy)
+            pbar.update()
+        pbar.close()
+        return summary_documents

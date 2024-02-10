@@ -22,6 +22,7 @@ def create_route_layer() -> RouteLayer:
             score_threshold=0.5,
         )
     ]
+    print(config("COHERE_API_KEY"))
     encoder = CohereEncoder(cohere_api_key=config("COHERE_API_KEY"))
     return RouteLayer(encoder=encoder, routes=routes)
 
@@ -40,9 +41,13 @@ async def get_documents(vector_service: VectorService, payload: RequestPayload) 
 async def query(payload: RequestPayload) -> List:
     rl = create_route_layer()
     decision = rl(payload.input).name
-    print(decision)
+
     if decision == "summarize":
-        return []
+        vector_service: VectorService = get_vector_service(
+            index_name=f"{payload.index_name}summary",
+            credentials=payload.vector_database,
+        )
+        return await get_documents(vector_service, payload)
 
     vector_service: VectorService = get_vector_service(
         index_name=payload.index_name, credentials=payload.vector_database

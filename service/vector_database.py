@@ -36,7 +36,7 @@ class VectorService(ABC):
     async def delete(self, file_url: str):
         pass
 
-    async def _generate_vectors(sefl, input: str):
+    async def _generate_vectors(self, input: str):
         embedding_model = TextEmbedding(
             model_name="sentence-transformers/all-MiniLM-L6-v2"
         )

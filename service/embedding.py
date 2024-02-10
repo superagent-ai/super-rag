@@ -4,11 +4,11 @@ from typing import Any, List, Union
 
 import numpy as np
 import requests
-from fastembed.embedding import FlagEmbedding as Embedding
 from llama_index import Document, SimpleDirectoryReader
 from llama_index.node_parser import SimpleNodeParser
 from tqdm import tqdm
 
+from encoders import BaseEncoder
 from models.file import File
 from service.vector_database import get_vector_service
 
@@ -55,17 +55,18 @@ class EmbeddingService:
         return nodes
 
     async def generate_embeddings(
-        self,
-        nodes: List[Union[Document, None]],
+        self, nodes: List[Union[Document, None]], encoder: BaseEncoder
     ) -> List[tuple[str, list, dict[str, Any]]]:
         pbar = tqdm(total=len(nodes), desc="Generating embeddings")
 
         async def generate_embedding(node):
             if node is not None:
-                embedding_model = Embedding(
-                    model_name="sentence-transformers/all-MiniLM-L6-v2", max_length=512
-                )
-                embeddings: List[np.ndarray] = list(embedding_model.embed(node.text))
+                embeddings: List[np.ndarray] = [
+                    np.array(e) for e in encoder([node.text])
+                ]
+
+                print(f"embeddings: {embeddings}")
+
                 embedding = (
                     node.id_,
                     embeddings[0].tolist(),

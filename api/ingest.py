@@ -3,10 +3,14 @@ from typing import Dict
 import requests
 from fastapi import APIRouter
 
-from models.ingest import RequestPayload
+import encoders
+from models.ingest import EncoderEnum, RequestPayload
 from service.embedding import EmbeddingService
 
 router = APIRouter()
+
+
+# Ensure you import the encoders module or specific encoder classes
 
 
 @router.post("/ingest")
@@ -18,7 +22,21 @@ async def ingest(payload: RequestPayload) -> Dict:
     )
     documents = await embedding_service.generate_documents()
     chunks = await embedding_service.generate_chunks(documents=documents)
-    await embedding_service.generate_embeddings(nodes=chunks)
+
+    # Encoder selection based on the payload's encoder value
+    encoder_mapping = {
+        EncoderEnum.cohere: encoders.CohereEncoder,
+        EncoderEnum.openai: encoders.OpenAIEncoder,
+        EncoderEnum.huggingface: encoders.HuggingFaceEncoder,
+        EncoderEnum.fastembed: encoders.FastEmbedEncoder,
+    }
+
+    encoder_class = encoder_mapping.get(payload.encoder)
+    if encoder_class is None:
+        raise ValueError(f"Unsupported encoder: {payload.encoder}")
+    encoder = encoder_class()
+
+    await embedding_service.generate_embeddings(nodes=chunks, encoder=encoder)
 
     if payload.webhook_url:
         requests.post(

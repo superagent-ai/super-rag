@@ -129,6 +129,9 @@ zipp = "3.17.0"
 [tool.poetry.extras]
 fastembed = ["fastembed"]
 
+[tool.poetry.group.dev.dependencies]
+ipykernel = "^6.29.2"
+
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"

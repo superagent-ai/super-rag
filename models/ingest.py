@@ -7,7 +7,6 @@ from models.file import File
 from models.vector_database import VectorDatabase
 
 
-# Step 1: Define the Encoder Enum
 class EncoderEnum(str, Enum):
     cohere = "cohere"
     openai = "openai"
@@ -15,7 +14,6 @@ class EncoderEnum(str, Enum):
     fastembed = "fastembed"
 
 
-# Step 2: Use the Enum in RequestPayload
 class RequestPayload(BaseModel):
     files: List[File]
     encoder: EncoderEnum

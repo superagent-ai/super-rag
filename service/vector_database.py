@@ -40,11 +40,6 @@ class VectorService(ABC):
         pass
 
     async def _generate_vectors(self, input: str):
-        # embedding_model = TextEmbedding(
-        #     model_name="sentence-transformers/all-MiniLM-L6-v2"
-        # )
-        # embeddings: List[np.ndarray] = list(embedding_model.embed(input))
-        # return embeddings[0].tolist()
         return self.encoder([input])
 
     async def rerank(self, query: str, documents: list, top_n: int = 4):
@@ -112,6 +107,11 @@ class PineconeVectorService(VectorService):
         return results["matches"]
 
     async def delete(self, file_url: str) -> None:
+        """
+        TODO: Fix the error
+        "Severless and starter indexes do not support deleting with metadata
+        filtering.","details":[]}
+        """
         self.index.delete(filter={"file_url": {"$eq": file_url}})
 
 

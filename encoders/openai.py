@@ -1,16 +1,13 @@
-import os
 from time import sleep
 from typing import List, Optional
 
 import openai
-from dotenv import load_dotenv
+from decouple import config
 from openai import OpenAIError
 from openai.types import CreateEmbeddingResponse
 from semantic_router.utils.logger import logger
 
 from encoders import BaseEncoder
-
-load_dotenv()
 
 
 class OpenAIEncoder(BaseEncoder):
@@ -25,9 +22,9 @@ class OpenAIEncoder(BaseEncoder):
         score_threshold: float = 0.82,
     ):
         if name is None:
-            name = os.getenv("OPENAI_MODEL_NAME", "text-embedding-3-small")
+            name = config("OPENAI_MODEL_NAME", "text-embedding-3-small")
         super().__init__(name=name, score_threshold=score_threshold)
-        api_key = openai_api_key or os.getenv("OPENAI_API_KEY")
+        api_key = openai_api_key or config("OPENAI_API_KEY")
         if api_key is None:
             raise ValueError("OpenAI API key cannot be 'None'.")
         try:

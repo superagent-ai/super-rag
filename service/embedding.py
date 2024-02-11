@@ -9,8 +9,8 @@ from llama_index import Document, SimpleDirectoryReader
 from llama_index.node_parser import SimpleNodeParser
 from tqdm import tqdm
 
-from encoders import BaseEncoder
 import encoders
+from encoders import BaseEncoder
 from models.file import File
 from models.ingest import EncoderEnum
 from service.vector_database import get_vector_service

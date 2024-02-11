@@ -3246,4 +3246,4 @@ fastembed = ["fastembed"]
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.9,<3.13"
-content-hash = "835674cbfb3d968e10452de3cec3d141abd6f4c7bb359fb119daf6386ff32dc3"
+content-hash = "765168a02a9fc27986b4ea1077a4dfdc904d2be5f980201d40e6a431b1290708"

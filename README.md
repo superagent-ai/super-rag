@@ -1,6 +1,6 @@
 # SuperRag
 
-Super-performant RAG pipeline for AI Agents/Assistants. 
+Super-performant RAG pipeline for AI Agents/Assistants.
 
 ## API
 
@@ -23,6 +23,7 @@ Input example:
         }
     },
     "index_name": "my_index",
+    "encoder": "my_encoder"
     "webhook_url": "https://my-webhook-url"
 }
 ```
@@ -41,6 +42,7 @@ Input example:
         }
     },
     "index_name": "my_index",
+    "encoder": "my_encoder",
 }
 ```
 

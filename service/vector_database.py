@@ -1,24 +1,28 @@
 from abc import ABC, abstractmethod
-from typing import Any, List, Type
+from typing import Any, List
 
-import numpy as np
 import weaviate
 from astrapy.db import AstraDB
 from decouple import config
-from fastembed import TextEmbedding
 from pinecone import Pinecone, ServerlessSpec
 from qdrant_client import QdrantClient
 from qdrant_client.http import models as rest
 from tqdm import tqdm
 
+from encoders.base import BaseEncoder
+from encoders.openai import OpenAIEncoder
 from models.vector_database import VectorDatabase
+from utils.logger import logger
 
 
 class VectorService(ABC):
-    def __init__(self, index_name: str, dimension: int, credentials: dict):
+    def __init__(
+        self, index_name: str, dimension: int, credentials: dict, encoder: BaseEncoder
+    ):
         self.index_name = index_name
         self.dimension = dimension
         self.credentials = credentials
+        self.encoder = encoder
 
     @abstractmethod
     async def upsert():
@@ -36,12 +40,8 @@ class VectorService(ABC):
     async def delete(self, file_url: str):
         pass
 
-    async def _generate_vectors(self, input: str):
-        embedding_model = TextEmbedding(
-            model_name="sentence-transformers/all-MiniLM-L6-v2"
-        )
-        embeddings: List[np.ndarray] = list(embedding_model.embed(input))
-        return embeddings[0].tolist()
+    async def _generate_vectors(self, input: str) -> List[List[float]]:
+        return self.encoder([input])
 
     async def rerank(self, query: str, documents: list, top_n: int = 4):
         from cohere import Client
@@ -65,16 +65,21 @@ class VectorService(ABC):
 
 
 class PineconeVectorService(VectorService):
-    def __init__(self, index_name: str, dimension: int, credentials: dict):
+    def __init__(
+        self, index_name: str, dimension: int, credentials: dict, encoder: BaseEncoder
+    ):
         super().__init__(
-            index_name=index_name, dimension=dimension, credentials=credentials
+            index_name=index_name,
+            dimension=dimension,
+            credentials=credentials,
+            encoder=encoder,
         )
         pinecone = Pinecone(api_key=credentials["api_key"])
         if index_name not in [index.name for index in pinecone.list_indexes()]:
             pinecone.create_index(
                 name=self.index_name,
-                dimension=1024,
-                metric="cosine",
+                dimension=dimension,
+                metric="dotproduct",
                 spec=ServerlessSpec(cloud="aws", region="us-west-2"),
             )
         self.index = pinecone.Index(name=self.index_name)
@@ -91,25 +96,52 @@ class PineconeVectorService(VectorService):
         return docs
 
     async def upsert(self, embeddings: List[tuple[str, list, dict[str, Any]]]):
-        self.index.upsert(vectors=tqdm(embeddings, desc="Upserting to Pinecone"))
+        if self.index is None:
+            raise ValueError(f"Pinecone index {self.index_name} is not initialized.")
+        for _ in tqdm(
+            embeddings, desc=f"Upserting to Pinecone index {self.index_name}"
+        ):
+            pass
+        self.index.upsert(vectors=embeddings)
 
-    async def query(self, input: str, top_k: 4, include_metadata: bool = True):
+    async def query(self, input: str, top_k: int = 4, include_metadata: bool = True):
+        if self.index is None:
+            raise ValueError(f"Pinecone index {self.index_name} is not initialized.")
         vectors = await self._generate_vectors(input=input)
         results = self.index.query(
-            vector=vectors,
+            vector=vectors[0],
             top_k=top_k,
             include_metadata=include_metadata,
         )
         return results["matches"]
 
     async def delete(self, file_url: str) -> None:
-        self.index.delete(filter={"file_url": {"$eq": file_url}})
+        if self.index is None:
+            raise ValueError(f"Pinecone index {self.index_name} is not initialized.")
+
+        query_response = self.index.query(
+            vector=[0.0] * self.dimension,
+            top_k=1000,
+            filter={"file_url": {"$eq": file_url}},
+        )
+        chunks = query_response.matches
+        logger.info(
+            f"Deleting {len(chunks)} chunks from Pinecone {self.index_name} index."
+        )
+
+        if chunks:
+            self.index.delete(ids=[chunk["id"] for chunk in chunks])
 
 
 class QdrantService(VectorService):
-    def __init__(self, index_name: str, dimension: int, credentials: dict):
+    def __init__(
+        self, index_name: str, dimension: int, credentials: dict, encoder: BaseEncoder
+    ):
         super().__init__(
-            index_name=index_name, dimension=dimension, credentials=credentials
+            index_name=index_name,
+            dimension=dimension,
+            credentials=credentials,
+            encoder=encoder,
         )
         self.client = QdrantClient(
             url=credentials["host"], api_key=credentials["api_key"], https=True
@@ -120,7 +152,7 @@ class QdrantService(VectorService):
                 collection_name=self.index_name,
                 vectors_config={
                     "content": rest.VectorParams(
-                        size=1024, distance=rest.Distance.COSINE
+                        size=dimension, distance=rest.Distance.COSINE
                     )
                 },
                 optimizers_config=rest.OptimizersConfigDiff(
@@ -186,9 +218,14 @@ class QdrantService(VectorService):
 
 
 class WeaviateService(VectorService):
-    def __init__(self, index_name: str, dimension: int, credentials: dict):
+    def __init__(
+        self, index_name: str, dimension: int, credentials: dict, encoder: BaseEncoder
+    ):
         super().__init__(
-            index_name=index_name, dimension=dimension, credentials=credentials
+            index_name=index_name,
+            dimension=dimension,
+            credentials=credentials,
+            encoder=encoder,
         )
         self.client = weaviate.Client(
             url=credentials["host"],
@@ -251,9 +288,14 @@ class WeaviateService(VectorService):
 
 
 class AstraService(VectorService):
-    def __init__(self, index_name: str, dimension: int, credentials: dict):
+    def __init__(
+        self, index_name: str, dimension: int, credentials: dict, encoder: BaseEncoder
+    ):
         super().__init__(
-            index_name=index_name, dimension=dimension, credentials=credentials
+            index_name=index_name,
+            dimension=dimension,
+            credentials=credentials,
+            encoder=encoder,
         )
         self.client = AstraDB(
             token=credentials["api_key"],
@@ -302,8 +344,11 @@ class AstraService(VectorService):
 
 
 def get_vector_service(
-    index_name: str, credentials: VectorDatabase, dimension: int = 1024
-) -> Type[VectorService]:
+    *,
+    index_name: str,
+    credentials: VectorDatabase,
+    encoder: BaseEncoder = OpenAIEncoder(),
+) -> VectorService:
     services = {
         "pinecone": PineconeVectorService,
         "qdrant": QdrantService,
@@ -317,6 +362,7 @@ def get_vector_service(
         raise ValueError(f"Unsupported provider: {credentials.type.value}")
     return service(
         index_name=index_name,
-        dimension=dimension,
+        dimension=encoder.dimension,
         credentials=dict(credentials.config),
+        encoder=encoder,
     )

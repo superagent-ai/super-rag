@@ -28,6 +28,7 @@ cmake = "^3.28.1"
 fastembed = "^0.2.1"
 pypdf = "^4.0.1"
 docx2txt = "^0.8"
+python-dotenv = "^1.0.1"
 
 [tool.poetry.extras]
 fastembed = ["fastembed"]

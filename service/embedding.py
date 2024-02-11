@@ -5,12 +5,14 @@ from typing import Any, List, Optional, Union
 
 import numpy as np
 import requests
-from fastembed import TextEmbedding
 from llama_index import Document, SimpleDirectoryReader
 from llama_index.node_parser import SimpleNodeParser
 from tqdm import tqdm
 
+import encoders
+from encoders import BaseEncoder
 from models.file import File
+from models.ingest import EncoderEnum
 from service.vector_database import get_vector_service
 from utils.summarise import completion
 
@@ -56,16 +58,18 @@ class EmbeddingService:
         return nodes
 
     async def generate_embeddings(
-        self, nodes: List[Union[Document, None]], index_name: Optional[str] = None
+        self,
+        nodes: List[Union[Document, None]],
+        encoder: BaseEncoder,
+        index_name: Optional[str] = None,
     ) -> List[tuple[str, list, dict[str, Any]]]:
         pbar = tqdm(total=len(nodes), desc="Generating embeddings")
 
         async def generate_embedding(node):
             if node is not None:
-                embedding_model = TextEmbedding(
-                    model_name="sentence-transformers/all-MiniLM-L6-v2"
-                )
-                embeddings: List[np.ndarray] = list(embedding_model.embed(node.text))
+                embeddings: List[np.ndarray] = [
+                    np.array(e) for e in encoder([node.text])
+                ]
                 embedding = (
                     node.id_,
                     embeddings[0].tolist(),
@@ -83,6 +87,7 @@ class EmbeddingService:
         vector_service = get_vector_service(
             index_name=index_name or self.index_name,
             credentials=self.vector_credentials,
+            encoder=encoder,
         )
         await vector_service.upsert(embeddings=[e for e in embeddings if e is not None])
 
@@ -100,3 +105,17 @@ class EmbeddingService:
             pbar.update()
         pbar.close()
         return summary_documents
+
+
+def get_encoder(*, encoder_type: EncoderEnum) -> encoders.BaseEncoder:
+    encoder_mapping = {
+        EncoderEnum.cohere: encoders.CohereEncoder,
+        EncoderEnum.openai: encoders.OpenAIEncoder,
+        EncoderEnum.huggingface: encoders.HuggingFaceEncoder,
+        EncoderEnum.fastembed: encoders.FastEmbedEncoder,
+    }
+
+    encoder_class = encoder_mapping.get(encoder_type)
+    if encoder_class is None:
+        raise ValueError(f"Unsupported encoder: {encoder_type}")
+    return encoder_class()

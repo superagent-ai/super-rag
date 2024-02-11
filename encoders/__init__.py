@@ -5,7 +5,6 @@ from encoders.fastembed import FastEmbedEncoder
 from encoders.huggingface import HuggingFaceEncoder
 from encoders.openai import OpenAIEncoder
 
-
 __all__ = [
     "BaseEncoder",
     "CohereEncoder",

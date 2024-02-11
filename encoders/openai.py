@@ -1,9 +1,8 @@
 from time import sleep
 from typing import List, Optional
-from decouple import config
 
 import openai
-from dotenv import load_dotenv
+from decouple import config
 from openai import OpenAIError
 from openai.types import CreateEmbeddingResponse
 from semantic_router.utils.logger import logger

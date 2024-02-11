@@ -1,7 +1,7 @@
 from typing import List, Optional
-from decouple import config
 
 import cohere
+from decouple import config
 
 from encoders import BaseEncoder
 

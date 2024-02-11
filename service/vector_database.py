@@ -39,7 +39,7 @@ class VectorService(ABC):
     async def delete(self, file_url: str):
         pass
 
-    async def _generate_vectors(self, input: str):
+    async def _generate_vectors(self, input: str) -> List[List[float]]:
         return self.encoder([input])
 
     async def rerank(self, query: str, documents: list, top_n: int = 4):
@@ -77,7 +77,7 @@ class PineconeVectorService(VectorService):
         if index_name not in [index.name for index in pinecone.list_indexes()]:
             pinecone.create_index(
                 name=self.index_name,
-                dimension=dimension or 1536,
+                dimension=dimension,
                 metric="dotproduct",
                 spec=ServerlessSpec(cloud="aws", region="us-west-2"),
             )
@@ -95,12 +95,20 @@ class PineconeVectorService(VectorService):
         return docs
 
     async def upsert(self, embeddings: List[tuple[str, list, dict[str, Any]]]):
-        self.index.upsert(vectors=tqdm(embeddings, desc="Upserting to Pinecone"))
+        if self.index is None:
+            raise ValueError(f"Pinecone index {self.index_name} is not initialized.")
+        for _ in tqdm(
+            embeddings, desc=f"Upserting to Pinecone index {self.index_name}"
+        ):
+            pass
+        self.index.upsert(vectors=embeddings)
 
-    async def query(self, input: str, top_k: 4, include_metadata: bool = True):
+    async def query(self, input: str, top_k: int = 4, include_metadata: bool = True):
+        if self.index is None:
+            raise ValueError(f"Pinecone index {self.index_name} is not initialized.")
         vectors = await self._generate_vectors(input=input)
         results = self.index.query(
-            vector=vectors,
+            vector=vectors[0],
             top_k=top_k,
             include_metadata=include_metadata,
         )
@@ -112,6 +120,9 @@ class PineconeVectorService(VectorService):
         "Severless and starter indexes do not support deleting with metadata
         filtering.","details":[]}
         """
+        if self.index is None:
+            raise ValueError(f"Pinecone index {self.index_name} is not initialized.")
+
         self.index.delete(filter={"file_url": {"$eq": file_url}})
 
 

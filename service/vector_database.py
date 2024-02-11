@@ -1,24 +1,27 @@
 from abc import ABC, abstractmethod
-from typing import Any, List, Type
+from typing import Any, List
 
-import numpy as np
 import weaviate
 from astrapy.db import AstraDB
 from decouple import config
-from fastembed import TextEmbedding
 from pinecone import Pinecone, ServerlessSpec
 from qdrant_client import QdrantClient
 from qdrant_client.http import models as rest
 from tqdm import tqdm
 
+from encoders.base import BaseEncoder
+from encoders.openai import OpenAIEncoder
 from models.vector_database import VectorDatabase
 
 
 class VectorService(ABC):
-    def __init__(self, index_name: str, dimension: int, credentials: dict):
+    def __init__(
+        self, index_name: str, dimension: int, credentials: dict, encoder: BaseEncoder
+    ):
         self.index_name = index_name
         self.dimension = dimension
         self.credentials = credentials
+        self.encoder = encoder
 
     @abstractmethod
     async def upsert():
@@ -37,11 +40,12 @@ class VectorService(ABC):
         pass
 
     async def _generate_vectors(self, input: str):
-        embedding_model = TextEmbedding(
-            model_name="sentence-transformers/all-MiniLM-L6-v2"
-        )
-        embeddings: List[np.ndarray] = list(embedding_model.embed(input))
-        return embeddings[0].tolist()
+        # embedding_model = TextEmbedding(
+        #     model_name="sentence-transformers/all-MiniLM-L6-v2"
+        # )
+        # embeddings: List[np.ndarray] = list(embedding_model.embed(input))
+        # return embeddings[0].tolist()
+        return self.encoder([input])
 
     async def rerank(self, query: str, documents: list, top_n: int = 4):
         from cohere import Client
@@ -65,15 +69,20 @@ class VectorService(ABC):
 
 
 class PineconeVectorService(VectorService):
-    def __init__(self, index_name: str, dimension: int, credentials: dict):
+    def __init__(
+        self, index_name: str, dimension: int, credentials: dict, encoder: BaseEncoder
+    ):
         super().__init__(
-            index_name=index_name, dimension=dimension, credentials=credentials
+            index_name=index_name,
+            dimension=dimension,
+            credentials=credentials,
+            encoder=encoder,
         )
         pinecone = Pinecone(api_key=credentials["api_key"])
         if index_name not in [index.name for index in pinecone.list_indexes()]:
             pinecone.create_index(
                 name=self.index_name,
-                dimension=1536,  # TODO: make it dynamic based on the encoder
+                dimension=dimension or 1536,
                 metric="dotproduct",
                 spec=ServerlessSpec(cloud="aws", region="us-west-2"),
             )
@@ -107,9 +116,14 @@ class PineconeVectorService(VectorService):
 
 
 class QdrantService(VectorService):
-    def __init__(self, index_name: str, dimension: int, credentials: dict):
+    def __init__(
+        self, index_name: str, dimension: int, credentials: dict, encoder: BaseEncoder
+    ):
         super().__init__(
-            index_name=index_name, dimension=dimension, credentials=credentials
+            index_name=index_name,
+            dimension=dimension,
+            credentials=credentials,
+            encoder=encoder,
         )
         self.client = QdrantClient(
             url=credentials["host"], api_key=credentials["api_key"], https=True
@@ -120,7 +134,7 @@ class QdrantService(VectorService):
                 collection_name=self.index_name,
                 vectors_config={
                     "content": rest.VectorParams(
-                        size=1024, distance=rest.Distance.COSINE
+                        size=dimension, distance=rest.Distance.COSINE
                     )
                 },
                 optimizers_config=rest.OptimizersConfigDiff(
@@ -186,9 +200,14 @@ class QdrantService(VectorService):
 
 
 class WeaviateService(VectorService):
-    def __init__(self, index_name: str, dimension: int, credentials: dict):
+    def __init__(
+        self, index_name: str, dimension: int, credentials: dict, encoder: BaseEncoder
+    ):
         super().__init__(
-            index_name=index_name, dimension=dimension, credentials=credentials
+            index_name=index_name,
+            dimension=dimension,
+            credentials=credentials,
+            encoder=encoder,
         )
         self.client = weaviate.Client(
             url=credentials["host"],
@@ -251,9 +270,14 @@ class WeaviateService(VectorService):
 
 
 class AstraService(VectorService):
-    def __init__(self, index_name: str, dimension: int, credentials: dict):
+    def __init__(
+        self, index_name: str, dimension: int, credentials: dict, encoder: BaseEncoder
+    ):
         super().__init__(
-            index_name=index_name, dimension=dimension, credentials=credentials
+            index_name=index_name,
+            dimension=dimension,
+            credentials=credentials,
+            encoder=encoder,
         )
         self.client = AstraDB(
             token=credentials["api_key"],
@@ -302,8 +326,11 @@ class AstraService(VectorService):
 
 
 def get_vector_service(
-    index_name: str, credentials: VectorDatabase, dimension: int = 1024
-) -> Type[VectorService]:
+    *,
+    index_name: str,
+    credentials: VectorDatabase,
+    encoder: BaseEncoder = OpenAIEncoder(),
+) -> VectorService:
     services = {
         "pinecone": PineconeVectorService,
         "qdrant": QdrantService,
@@ -317,6 +344,7 @@ def get_vector_service(
         raise ValueError(f"Unsupported provider: {credentials.type.value}")
     return service(
         index_name=index_name,
-        dimension=dimension,
+        dimension=encoder.dimension,
         credentials=dict(credentials.config),
+        encoder=encoder,
     )

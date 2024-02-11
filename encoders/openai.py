@@ -3,16 +3,20 @@ from time import sleep
 from typing import List, Optional
 
 import openai
+from dotenv import load_dotenv
 from openai import OpenAIError
 from openai.types import CreateEmbeddingResponse
+from semantic_router.utils.logger import logger
 
 from encoders import BaseEncoder
-from semantic_router.utils.logger import logger
+
+load_dotenv()
 
 
 class OpenAIEncoder(BaseEncoder):
     client: Optional[openai.Client]
     type: str = "openai"
+    dimension: int = 1536
 
     def __init__(
         self,
@@ -21,7 +25,7 @@ class OpenAIEncoder(BaseEncoder):
         score_threshold: float = 0.82,
     ):
         if name is None:
-            name = os.getenv("OPENAI_MODEL_NAME", "text-embedding-ada-002")
+            name = os.getenv("OPENAI_MODEL_NAME", "text-embedding-3-small")
         super().__init__(name=name, score_threshold=score_threshold)
         api_key = openai_api_key or os.getenv("OPENAI_API_KEY")
         if api_key is None:

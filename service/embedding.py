@@ -10,7 +10,9 @@ from llama_index.node_parser import SimpleNodeParser
 from tqdm import tqdm
 
 from encoders import BaseEncoder
+import encoders
 from models.file import File
+from models.ingest import EncoderEnum
 from service.vector_database import get_vector_service
 from utils.summarise import completion
 
@@ -85,6 +87,7 @@ class EmbeddingService:
         vector_service = get_vector_service(
             index_name=index_name or self.index_name,
             credentials=self.vector_credentials,
+            encoder=encoder,
         )
         await vector_service.upsert(embeddings=[e for e in embeddings if e is not None])
 
@@ -102,3 +105,17 @@ class EmbeddingService:
             pbar.update()
         pbar.close()
         return summary_documents
+
+
+def get_encoder(*, encoder_type: EncoderEnum) -> encoders.BaseEncoder:
+    encoder_mapping = {
+        EncoderEnum.cohere: encoders.CohereEncoder,
+        EncoderEnum.openai: encoders.OpenAIEncoder,
+        EncoderEnum.huggingface: encoders.HuggingFaceEncoder,
+        EncoderEnum.fastembed: encoders.FastEmbedEncoder,
+    }
+
+    encoder_class = encoder_mapping.get(encoder_type)
+    if encoder_class is None:
+        raise ValueError(f"Unsupported encoder: {encoder_type}")
+    return encoder_class()

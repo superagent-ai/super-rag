@@ -6,6 +6,7 @@ from semantic_router.layer import RouteLayer
 from semantic_router.route import Route
 
 from models.query import RequestPayload
+from service.embedding import get_encoder
 from service.vector_database import VectorService, get_vector_service
 
 
@@ -27,7 +28,9 @@ def create_route_layer() -> RouteLayer:
     return RouteLayer(encoder=encoder, routes=routes)
 
 
-async def get_documents(vector_service: VectorService, payload: RequestPayload) -> List:
+async def get_documents(
+    *, vector_service: VectorService, payload: RequestPayload
+) -> List:
     chunks = await vector_service.query(input=payload.input, top_k=4)
     documents = await vector_service.convert_to_rerank_format(chunks=chunks)
 
@@ -41,15 +44,19 @@ async def get_documents(vector_service: VectorService, payload: RequestPayload) 
 async def query(payload: RequestPayload) -> List:
     rl = create_route_layer()
     decision = rl(payload.input).name
+    encoder = get_encoder(encoder_type=payload.encoder)
 
     if decision == "summarize":
         vector_service: VectorService = get_vector_service(
             index_name=f"{payload.index_name}summary",
             credentials=payload.vector_database,
+            encoder=encoder,
         )
-        return await get_documents(vector_service, payload)
+        return await get_documents(vector_service=vector_service, payload=payload)
 
     vector_service: VectorService = get_vector_service(
-        index_name=payload.index_name, credentials=payload.vector_database
+        index_name=payload.index_name,
+        credentials=payload.vector_database,
+        encoder=encoder,
     )
-    return await get_documents(vector_service, payload)
+    return await get_documents(vector_service=vector_service, payload=payload)

@@ -7,6 +7,7 @@ class BaseEncoder(BaseModel):
     name: str
     score_threshold: float
     type: str = Field(default="base")
+    dimension: int = Field(default=1536)
 
     class Config:
         arbitrary_types_allowed = True

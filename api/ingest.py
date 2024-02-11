@@ -4,9 +4,8 @@ from typing import Dict
 import aiohttp
 from fastapi import APIRouter
 
-import encoders
-from models.ingest import EncoderEnum, RequestPayload
-from service.embedding import EmbeddingService
+from models.ingest import RequestPayload
+from service.embedding import EmbeddingService, get_encoder
 
 router = APIRouter()
 
@@ -21,17 +20,7 @@ async def ingest(payload: RequestPayload) -> Dict:
     documents = await embedding_service.generate_documents()
     chunks = await embedding_service.generate_chunks(documents=documents)
 
-    encoder_mapping = {
-        EncoderEnum.cohere: encoders.CohereEncoder,
-        EncoderEnum.openai: encoders.OpenAIEncoder,
-        EncoderEnum.huggingface: encoders.HuggingFaceEncoder,
-        EncoderEnum.fastembed: encoders.FastEmbedEncoder,
-    }
-
-    encoder_class = encoder_mapping.get(payload.encoder)
-    if encoder_class is None:
-        raise ValueError(f"Unsupported encoder: {payload.encoder}")
-    encoder = encoder_class()
+    encoder = get_encoder(encoder_type=payload.encoder)
 
     summary_documents = await embedding_service.generate_summary_documents(
         documents=documents

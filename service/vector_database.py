@@ -12,6 +12,7 @@ from tqdm import tqdm
 from encoders.base import BaseEncoder
 from encoders.openai import OpenAIEncoder
 from models.vector_database import VectorDatabase
+from utils.logger import logger
 
 
 class VectorService(ABC):
@@ -115,15 +116,17 @@ class PineconeVectorService(VectorService):
         return results["matches"]
 
     async def delete(self, file_url: str) -> None:
-        """
-        TODO: Fix the error
-        "Severless and starter indexes do not support deleting with metadata
-        filtering.","details":[]}
-        """
         if self.index is None:
             raise ValueError(f"Pinecone index {self.index_name} is not initialized.")
 
-        self.index.delete(filter={"file_url": {"$eq": file_url}})
+        query_response = self.index.query(
+            vector=[0.0] * self.dimension,
+            top_k=1000,
+            filter={"file_url": {"$eq": file_url}},
+        )
+        chunks = query_response.matches
+        logger.info(f"Deleting {len(chunks)} chunks from Pinecone")
+        self.index.delete(ids=[chunk["id"] for chunk in chunks])
 
 
 class QdrantService(VectorService):

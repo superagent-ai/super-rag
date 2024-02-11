@@ -1,5 +1,5 @@
-import os
 from typing import List, Optional
+from decouple import config
 
 import cohere
 
@@ -17,9 +17,9 @@ class CohereEncoder(BaseEncoder):
         score_threshold: float = 0.3,
     ):
         if name is None:
-            name = os.getenv("COHERE_MODEL_NAME", "embed-english-v3.0")
+            name = config("COHERE_MODEL_NAME", "embed-english-v3.0")
         super().__init__(name=name, score_threshold=score_threshold)
-        cohere_api_key = cohere_api_key or os.getenv("COHERE_API_KEY")
+        cohere_api_key = cohere_api_key or config("COHERE_API_KEY")
         if cohere_api_key is None:
             raise ValueError("Cohere API key cannot be 'None'.")
         try:

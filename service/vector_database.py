@@ -125,8 +125,12 @@ class PineconeVectorService(VectorService):
             filter={"file_url": {"$eq": file_url}},
         )
         chunks = query_response.matches
-        logger.info(f"Deleting {len(chunks)} chunks from Pinecone")
-        self.index.delete(ids=[chunk["id"] for chunk in chunks])
+        logger.info(
+            f"Deleting {len(chunks)} chunks from Pinecone {self.index_name} index."
+        )
+
+        if chunks:
+            self.index.delete(ids=[chunk["id"] for chunk in chunks])
 
 
 class QdrantService(VectorService):

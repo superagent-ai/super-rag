@@ -1,6 +1,6 @@
 from pydantic import BaseModel
-from models.ingest import EncoderEnum
 
+from models.ingest import EncoderEnum
 from models.vector_database import VectorDatabase
 
 

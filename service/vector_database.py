@@ -37,6 +37,20 @@ class VectorService(ABC):
     # async def convert_to_rerank_format():
     #     pass
 
+    # TODO: make it default method instead of abstract
+    # async def convert_to_rerank_format(self, chunks: List[BaseDocumentChunk]):
+    #     docs = [
+    #         {
+    #             "content": chunk.text,
+    #             "page_label": (
+    #                 chunk.metadata.get("page_number", "") if chunk.metadata else ""
+    #             ),
+    #             "file_url": chunk.doc_url,
+    #         }
+    #         for chunk in chunks
+    #     ]
+    #     return docs
+
     @abstractmethod
     async def delete(self, file_url: str):
         pass

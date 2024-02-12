@@ -1,14 +1,14 @@
 from decouple import config
 from openai import AsyncOpenAI
 
-from models.document import Document
+from models.document import BaseDocument
 
 client = AsyncOpenAI(
     api_key=config("OPENAI_API_KEY"),
 )
 
 
-def _generate_content(document: Document) -> str:
+def _generate_content(document: BaseDocument) -> str:
     return f"""Make an in depth summary the block of text below.
 
 Text:
@@ -19,7 +19,7 @@ Text:
 Your summary:"""
 
 
-async def completion(document: Document):
+async def completion(document: BaseDocument):
     content = _generate_content(document)
     completion = await client.chat.completions.create(
         messages=[

@@ -18,6 +18,7 @@ from models.ingest import EncoderEnum
 from service.vector_database import get_vector_service
 from utils.logger import logger
 from utils.summarise import completion
+from unstructured.documents.elements import Element
 
 
 class EmbeddingService:
@@ -41,8 +42,8 @@ class EmbeddingService:
             raise ValueError("Unsupported datasource type")
 
     async def _download_and_extract_elements(
-        self, file, strategy="hi_res"
-    ) -> List[Any]:
+        self, file, strategy: Optional[str] = "hi_res"
+    ) -> List[Element]:
         """
         Downloads the file and extracts elements using the partition function.
         Returns a list of unstructured elements.
@@ -84,15 +85,17 @@ class EmbeddingService:
         except Exception as e:
             logger.error(f"Error loading document {file.url}: {e}")
 
-    async def generate_chunks(self) -> List[BaseDocumentChunk]:
+    async def generate_chunks(self, strategy: Optional[str]) -> List[BaseDocumentChunk]:
         doc_chunks = []
         for file in tqdm(self.files, desc="Generating chunks"):
             try:
-                elements = await self._download_and_extract_elements(file)
+                elements = await self._download_and_extract_elements(file, strategy)
                 document = await self.generate_document(file, elements)
                 if not document:
                     continue
-                chunks = chunk_by_title(elements)
+                chunks = chunk_by_title(
+                    elements, max_characters=500, combine_text_under_n_chars=0
+                )
                 for chunk in chunks:
                     # Ensure all metadata values are of a type acceptable to Pinecone
                     sanitized_metadata = {

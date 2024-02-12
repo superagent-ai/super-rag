@@ -13,3 +13,4 @@ class RequestPayload(BaseModel):
 
 class ResponsePayload(BaseModel):
     success: bool
+    data: dict = {}

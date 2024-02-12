@@ -145,7 +145,7 @@ class PineconeVectorService(VectorService):
             document_chunks.append(document_chunk)
         return document_chunks
 
-    async def delete(self, file_url: str) -> None:
+    async def delete(self, file_url: str) -> dict[str, int]:
         if self.index is None:
             raise ValueError(f"Pinecone index {self.index_name} is not initialized.")
 
@@ -153,7 +153,7 @@ class PineconeVectorService(VectorService):
             vector=[0.0] * self.dimension,
             top_k=1000,
             include_metadata=True,
-            filter={"file_url": file_url},
+            filter={"source": {"$eq": file_url}},
         )
         chunks = query_response.matches
         logger.info(
@@ -162,6 +162,7 @@ class PineconeVectorService(VectorService):
 
         if chunks:
             self.index.delete(ids=[chunk["id"] for chunk in chunks])
+        return {"num_of_deleted_chunks": len(chunks)}
 
 
 class QdrantService(VectorService):

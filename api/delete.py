@@ -16,5 +16,5 @@ async def delete(payload: RequestPayload):
         credentials=payload.vector_database,
         encoder=encoder,
     )
-    await vector_service.delete(file_url=payload.file_url)
-    return {"success": True}
+    data = await vector_service.delete(file_url=payload.file_url)
+    return {"success": True, "data": data}

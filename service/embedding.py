@@ -8,6 +8,7 @@ import numpy as np
 import requests
 from tqdm import tqdm
 from unstructured.chunking.title import chunk_by_title
+from unstructured.documents.elements import Element
 from unstructured.partition.auto import partition
 
 import encoders
@@ -18,7 +19,6 @@ from models.ingest import EncoderEnum
 from service.vector_database import get_vector_service
 from utils.logger import logger
 from utils.summarise import completion
-from unstructured.documents.elements import Element
 
 
 class EmbeddingService:

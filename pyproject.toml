@@ -25,13 +25,10 @@ openai = "^1.12.0"
 tqdm = "^4.66.2"
 cohere = "^4.46"
 cmake = "^3.28.1"
-fastembed = "^0.2.1"
 pypdf = "^4.0.1"
 docx2txt = "^0.8"
 python-dotenv = "^1.0.1"
-
-[tool.poetry.extras]
-fastembed = ["fastembed"]
+unstructured = {version = "^0.12.4", extras = ["all-docs"], python = "<3.12"}
 
 [tool.poetry.group.dev.dependencies]
 termcolor = "^2.4.0"

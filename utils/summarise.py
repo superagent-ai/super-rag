@@ -1,5 +1,5 @@
 from decouple import config
-from llama_index import Document
+from models.document import Document
 from openai import AsyncOpenAI
 
 client = AsyncOpenAI(
@@ -12,7 +12,7 @@ def _generate_content(document: Document) -> str:
 
 Text:
 ------------------------------------------
-{document.get_content()}
+{document.text}
 ------------------------------------------
 
 Your summary:"""

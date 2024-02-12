@@ -9,6 +9,8 @@ class FileType(Enum):
     txt = "TXT"
     pptx = "PPTX"
     md = "MARKDOWN"
+    csv = "CSV"
+    xlsx = "XLSX"
 
 
 class File(BaseModel):

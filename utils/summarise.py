@@ -1,6 +1,7 @@
 from decouple import config
-from models.document import Document
 from openai import AsyncOpenAI
+
+from models.document import Document
 
 client = AsyncOpenAI(
     api_key=config("OPENAI_API_KEY"),

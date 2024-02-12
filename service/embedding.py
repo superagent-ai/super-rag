@@ -5,15 +5,15 @@ from typing import Any, List, Optional
 
 import numpy as np
 import requests
-from unstructured.partition.auto import partition
-from unstructured.chunking.title import chunk_by_title
 from tqdm import tqdm
+from unstructured.chunking.title import chunk_by_title
+from unstructured.partition.auto import partition
 
 import encoders
 from encoders import BaseEncoder
+from models.document import Document
 from models.file import File
 from models.ingest import EncoderEnum
-from models.document import Document
 from service.vector_database import get_vector_service
 from utils.summarise import completion
 
@@ -30,6 +30,8 @@ class EmbeddingService:
             "PDF": ".pdf",
             "MARKDOWN": ".md",
             "DOCX": ".docx",
+            "CSV": ".csv",
+            "XLSX": ".xlsx",
         }
         try:
             return suffixes[type]

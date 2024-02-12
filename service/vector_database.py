@@ -30,26 +30,12 @@ class VectorService(ABC):
         pass
 
     @abstractmethod
-    async def query():
+    async def query(self, input: str, top_k: int = 25) -> List[BaseDocumentChunk]:
         pass
 
-    @abstractmethod
-    async def convert_to_rerank_format():
-        pass
-
-    # TODO: make it default method instead of abstract
-    # async def convert_to_rerank_format(self, chunks: List[BaseDocumentChunk]):
-    #     docs = [
-    #         {
-    #             "content": chunk.text,
-    #             "page_label": (
-    #                 chunk.metadata.get("page_number", "") if chunk.metadata else ""
-    #             ),
-    #             "file_url": chunk.doc_url,
-    #         }
-    #         for chunk in chunks
-    #     ]
-    #     return docs
+    # @abstractmethod
+    # async def convert_to_rerank_format():
+    #     pass
 
     @abstractmethod
     async def delete(self, file_url: str):
@@ -58,25 +44,46 @@ class VectorService(ABC):
     async def _generate_vectors(self, input: str) -> List[List[float]]:
         return self.encoder([input])
 
-    async def rerank(self, query: str, documents: list, top_n: int = 5):
+    async def rerank(
+        self, query: str, documents: list[BaseDocumentChunk], top_n: int = 5
+    ) -> list[BaseDocumentChunk]:
         from cohere import Client
 
         api_key = config("COHERE_API_KEY")
         if not api_key:
             raise ValueError("API key for Cohere is not present.")
         cohere_client = Client(api_key=api_key)
-        docs = [doc["content"] for doc in tqdm(documents, desc="Reranking")]
-        re_ranked = cohere_client.rerank(
-            model="rerank-multilingual-v2.0",
-            query=query,
-            documents=docs,
-            top_n=top_n,
-        ).results
-        results = []
-        for r in tqdm(re_ranked, desc="Processing reranked results"):
-            doc = documents[r.index]
-            results.append(doc)
-        return results
+
+        # Avoid duplications, TODO: fix ingestion for duplications
+        # Deduplicate documents based on content while preserving order
+        seen = set()
+        deduplicated_documents = [
+            doc
+            for doc in documents
+            if doc.content not in seen and not seen.add(doc.content)
+        ]
+        docs_text = list(
+            doc.content
+            for doc in tqdm(
+                deduplicated_documents,
+                desc=f"Reranking {len(deduplicated_documents)} documents",
+            )
+        )
+        try:
+            re_ranked = cohere_client.rerank(
+                model="rerank-multilingual-v2.0",
+                query=query,
+                documents=docs_text,
+                top_n=top_n,
+            ).results
+            results = []
+            for r in tqdm(re_ranked, desc="Processing reranked results "):
+                doc = deduplicated_documents[r.index]
+                results.append(doc)
+            return results
+        except Exception as e:
+            logger.error(f"Error while reranking: {e}")
+            raise Exception(f"Error while reranking: {e}")
 
 
 class PineconeVectorService(VectorService):
@@ -99,20 +106,6 @@ class PineconeVectorService(VectorService):
             )
         self.index = pinecone.Index(name=self.index_name)
 
-    # TODO remove this, and use default method
-    async def convert_to_rerank_format(self, chunks: List[BaseDocumentChunk]):
-        docs = [
-            {
-                "content": chunk.text,
-                "page_label": (
-                    chunk.metadata.get("page_number", "") if chunk.metadata else ""
-                ),
-                "file_url": chunk.doc_url,
-            }
-            for chunk in chunks
-        ]
-        return docs
-
     async def upsert(self, embeddings: List[tuple[str, list, dict[str, Any]]]):
         if self.index is None:
             raise ValueError(f"Pinecone index {self.index_name} is not initialized.")
@@ -127,9 +120,9 @@ class PineconeVectorService(VectorService):
     ) -> list[BaseDocumentChunk]:
         if self.index is None:
             raise ValueError(f"Pinecone index {self.index_name} is not initialized.")
-        vectors = await self._generate_vectors(input=input)
+        query_vectors = await self._generate_vectors(input=input)
         results = self.index.query(
-            vector=vectors[0],
+            vector=query_vectors[0],
             top_k=top_k,
             include_metadata=include_metadata,
         )
@@ -138,8 +131,11 @@ class PineconeVectorService(VectorService):
             document_chunk = BaseDocumentChunk(
                 id=match["id"],
                 document_id=match["metadata"].get("document_id", ""),
-                text=match["metadata"]["content"],
+                content=match["metadata"]["content"],
                 doc_url=match["metadata"].get("source", ""),
+                page_number=str(
+                    match["metadata"].get("page_number", "")
+                ),  # TODO: is this correct?
                 metadata={
                     key: value
                     for key, value in match["metadata"].items()
@@ -156,7 +152,8 @@ class PineconeVectorService(VectorService):
         query_response = self.index.query(
             vector=[0.0] * self.dimension,
             top_k=1000,
-            filter={"file_url": {"$eq": file_url}},
+            include_metadata=True,
+            filter={"file_url": file_url},
         )
         chunks = query_response.matches
         logger.info(

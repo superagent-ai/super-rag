@@ -77,7 +77,7 @@ class EmbeddingService:
             }
             return BaseDocument(
                 id=f"doc_{uuid.uuid4()}",
-                text=doc_content,
+                content=doc_content,
                 doc_url=file.url,
                 metadata=doc_metadata,
             )
@@ -108,7 +108,7 @@ class EmbeddingService:
                         BaseDocumentChunk(
                             id=chunk_id,
                             document_id=document.id,
-                            text=chunk.text,
+                            content=chunk.text,
                             doc_url=file.url,
                             metadata={
                                 "chunk_id": chunk_id,
@@ -129,7 +129,7 @@ class EmbeddingService:
 
     async def generate_embeddings(
         self,
-        documents: List[BaseDocument],
+        documents: List[BaseDocumentChunk],
         encoder: BaseEncoder,
         index_name: Optional[str] = None,
     ) -> List[tuple[str, list, dict[str, Any]]]:
@@ -145,7 +145,7 @@ class EmbeddingService:
         async def generate_embedding(document: BaseDocument):
             if document is not None:
                 embeddings: List[np.ndarray] = [
-                    np.array(e) for e in encoder([document.text])
+                    np.array(e) for e in encoder([document.content])
                 ]
 
                 logger.info(f"Embedding: {document.id}, metadata: {document.metadata}")
@@ -177,19 +177,20 @@ class EmbeddingService:
                 raise Exception(f"Error upserting embeddings: {e}")
         return embeddings
 
+    # TODO: Do we summarize the documents or chunks here?
     async def generate_summary_documents(
-        self, documents: List[BaseDocument]
-    ) -> List[BaseDocument]:
+        self, documents: List[BaseDocumentChunk]
+    ) -> List[BaseDocumentChunk]:
         pbar = tqdm(total=len(documents), desc="Summarizing documents")
         pages = {}
         for document in documents:
-            page_number = document.metadata.get("page_number")
+            page_number = document.page_number
             if page_number not in pages:
                 doc = copy.deepcopy(document)
-                doc.text = await completion(document=doc)
+                doc.content = await completion(document=doc)
                 pages[page_number] = doc
             else:
-                pages[page_number].text += document.text
+                pages[page_number].content += document.content
             pbar.update()
         pbar.close()
         summary_documents = list(pages.values())

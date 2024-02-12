@@ -1,8 +1,14 @@
 from pydantic import BaseModel
 
 
-class Document(BaseModel):
+class BaseDocument(BaseModel):
     id: str
-    text: str
-    file_url: str
+    content: str
+    doc_url: str
     metadata: dict | None = None
+
+
+class BaseDocumentChunk(BaseDocument):
+    document_id: str
+    page_number: str = ""
+    dense_embedding: list[float] | None = None

@@ -1,6 +1,7 @@
 from fastapi import APIRouter
 
 from models.delete import RequestPayload, ResponsePayload
+from service.embedding import get_encoder
 from service.vector_database import VectorService, get_vector_service
 from service.embedding import get_encoder
 

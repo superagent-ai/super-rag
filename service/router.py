@@ -8,6 +8,7 @@ from semantic_router.route import Route
 from models.query import RequestPayload
 from service.embedding import get_encoder
 from service.vector_database import VectorService, get_vector_service
+from utils.summarise import SUMMARY_SUFFIX
 
 
 def create_route_layer() -> RouteLayer:
@@ -48,7 +49,7 @@ async def query(payload: RequestPayload) -> List:
 
     if decision == "summarize":
         vector_service: VectorService = get_vector_service(
-            index_name=f"{payload.index_name}summary",
+            index_name=f"{payload.index_name}-{SUMMARY_SUFFIX}",
             credentials=payload.vector_database,
             encoder=encoder,
         )

@@ -19,12 +19,9 @@ async def ingest(payload: RequestPayload) -> Dict:
     )
     chunks = await embedding_service.generate_chunks()
     encoder = get_encoder(encoder_type=payload.encoder)
-    print(len(chunks))
     summary_documents = await embedding_service.generate_summary_documents(
         documents=chunks
     )
-
-    return {"success": True}
 
     await asyncio.gather(
         embedding_service.generate_and_upsert_embeddings(

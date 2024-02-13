@@ -122,7 +122,6 @@ class PineconeVectorService(VectorService):
                     "document_id": chunk.document_id,
                     "content": chunk.content,
                     "doc_url": chunk.doc_url,
-                    "page_number": chunk.page_number,
                     **(chunk.metadata if chunk.metadata else {}),
                 },
             }
@@ -218,14 +217,19 @@ class QdrantService(VectorService):
         ]
         return docs
 
-    async def upsert(self, embeddings: List[tuple[str, list, dict[str, Any]]]) -> None:
+    async def upsert(self, chunks: List[BaseDocumentChunk]) -> None:
         points = []
-        for _embedding in tqdm(embeddings, desc="Upserting to Qdrant"):
+        for chunk in tqdm(chunks, desc="Upserting to Qdrant"):
             points.append(
                 rest.PointStruct(
-                    id=_embedding[0],
-                    vector={"content": _embedding[1]},
-                    payload={**_embedding[2]},
+                    id=chunk.id,
+                    vector={"content": chunk.dense_embedding},
+                    payload={
+                        "document_id": chunk.document_id,
+                        "content": chunk.content,
+                        "doc_url": chunk.doc_url,
+                        **(chunk.metadata if chunk.metadata else {}),
+                    },
                 )
             )
 
@@ -316,7 +320,6 @@ class WeaviateService(VectorService):
                         "text": chunk.content,
                         "document_id": chunk.document_id,
                         "doc_url": chunk.doc_url,
-                        "page_number": chunk.page_number,
                         **(chunk.metadata if chunk.metadata else {}),
                     },
                     "class_name": self.index_name,

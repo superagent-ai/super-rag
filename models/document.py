@@ -1,5 +1,3 @@
-# noqa: F401, F403
-
 import uuid
 from typing import List, Optional
 
@@ -22,7 +20,7 @@ class BaseDocumentChunk(BaseModel):
     dense_embedding: Optional[List[float]] = None
 
     @validator("id")
-    def id_must_be_valid_uuid(cls, v):
+    def id_must_be_valid_uuid(cls, v):  # noqa: F841
         try:
             uuid_obj = uuid.UUID(v, version=4)
             return str(uuid_obj)
@@ -30,7 +28,7 @@ class BaseDocumentChunk(BaseModel):
             raise ValueError("id must be a valid UUID")
 
     @validator("dense_embedding")
-    def embeddings_must_be_list_of_floats(cls, v):
+    def embeddings_must_be_list_of_floats(cls, v):  # noqa: F841
         if v is None:
             return v  # Allow None to pass through
         if not all(isinstance(item, float) for item in v):

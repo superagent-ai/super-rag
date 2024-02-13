@@ -132,7 +132,7 @@ class EmbeddingService:
                 logger.error(f"Error loading chunks from {file.url}: {e}")
         return doc_chunks
 
-    async def generate_embeddings(
+    async def generate_and_upsert_embeddings(
         self,
         documents: List[BaseDocumentChunk],
         encoder: BaseEncoder,

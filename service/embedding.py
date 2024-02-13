@@ -186,7 +186,7 @@ class EmbeddingService:
         pbar = tqdm(total=len(documents), desc="Summarizing documents")
         pages = {}
         for document in documents:
-            page_number = document.page_number
+            page_number = document.metadata.get("page_number", None)
             if page_number not in pages:
                 doc = copy.deepcopy(document)
                 doc.content = await completion(document=doc)

@@ -10,7 +10,7 @@ packages = [{include = "main.py"}]
 python = ">=3.9,<3.13"
 fastapi = "^0.109.2"
 uvicorn = "^0.27.1"
-weaviate-client = "^3.26.0"
+weaviate-client = "^4.1.2"
 llama-index = "^0.9.46"
 pinecone-client = "^3.0.2"
 qdrant-client = "^1.7.3"
@@ -32,6 +32,7 @@ unstructured = {version = "^0.12.4", extras = ["all-docs"], python = "<3.12"}
 
 [tool.poetry.group.dev.dependencies]
 termcolor = "^2.4.0"
+ipykernel = "^6.29.2"
 
 [build-system]
 requires = ["poetry-core"]

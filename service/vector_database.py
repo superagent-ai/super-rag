@@ -1,3 +1,4 @@
+import uuid
 from abc import ABC, abstractmethod
 from typing import Any, List
 
@@ -11,6 +12,7 @@ from tqdm import tqdm
 
 from encoders.base import BaseEncoder
 from encoders.openai import OpenAIEncoder
+from models.delete import DeleteResponse
 from models.document import BaseDocumentChunk
 from models.vector_database import VectorDatabase
 from utils.logger import logger
@@ -26,33 +28,15 @@ class VectorService(ABC):
         self.encoder = encoder
 
     @abstractmethod
-    async def upsert():
+    async def upsert(self, chunks: List[BaseDocumentChunk]):
         pass
 
     @abstractmethod
     async def query(self, input: str, top_k: int = 25) -> List[BaseDocumentChunk]:
         pass
 
-    # @abstractmethod
-    # async def convert_to_rerank_format():
-    #     pass
-
-    # TODO: make it default method instead of abstract
-    # async def convert_to_rerank_format(self, chunks: List[BaseDocumentChunk]):
-    #     docs = [
-    #         {
-    #             "content": chunk.text,
-    #             "page_label": (
-    #                 chunk.metadata.get("page_number", "") if chunk.metadata else ""
-    #             ),
-    #             "file_url": chunk.doc_url,
-    #         }
-    #         for chunk in chunks
-    #     ]
-    #     return docs
-
     @abstractmethod
-    async def delete(self, file_url: str):
+    async def delete(self, file_url: str) -> DeleteResponse:
         pass
 
     async def _generate_vectors(self, input: str) -> List[List[float]]:
@@ -120,14 +104,30 @@ class PineconeVectorService(VectorService):
             )
         self.index = pinecone.Index(name=self.index_name)
 
-    async def upsert(self, embeddings: List[tuple[str, list, dict[str, Any]]]):
+    # TODO: add batch size
+    async def upsert(self, chunks: List[BaseDocumentChunk]):
         if self.index is None:
             raise ValueError(f"Pinecone index {self.index_name} is not initialized.")
-        for _ in tqdm(
-            embeddings, desc=f"Upserting to Pinecone index {self.index_name}"
+
+        # Prepare the data for upserting into Pinecone
+        vectors_to_upsert = []
+        for chunk in tqdm(
+            chunks,
+            desc=f"Upserting {len(chunks)} chunks to Pinecone index {self.index_name}",
         ):
-            pass
-        self.index.upsert(vectors=embeddings)
+            vector_data = {
+                "id": chunk.id,
+                "values": chunk.dense_embedding,
+                "metadata": {
+                    "document_id": chunk.document_id,
+                    "content": chunk.content,
+                    "doc_url": chunk.doc_url,
+                    "page_number": chunk.page_number,
+                    **(chunk.metadata if chunk.metadata else {}),
+                },
+            }
+            vectors_to_upsert.append(vector_data)
+        self.index.upsert(vectors=vectors_to_upsert)
 
     async def query(
         self, input: str, top_k: int = 25, include_metadata: bool = True
@@ -159,7 +159,7 @@ class PineconeVectorService(VectorService):
             document_chunks.append(document_chunk)
         return document_chunks
 
-    async def delete(self, file_url: str) -> dict[str, int]:
+    async def delete(self, file_url: str) -> DeleteResponse:
         if self.index is None:
             raise ValueError(f"Pinecone index {self.index_name} is not initialized.")
 
@@ -176,7 +176,7 @@ class PineconeVectorService(VectorService):
 
         if chunks:
             self.index.delete(ids=[chunk["id"] for chunk in chunks])
-        return {"num_of_deleted_chunks": len(chunks)}
+        return DeleteResponse(num_of_deleted_chunks=len(chunks))
 
 
 class QdrantService(VectorService):
@@ -269,6 +269,7 @@ class WeaviateService(VectorService):
     def __init__(
         self, index_name: str, dimension: int, credentials: dict, encoder: BaseEncoder
     ):
+        # TODO: create index if not exists
         super().__init__(
             index_name=index_name,
             dimension=dimension,
@@ -291,50 +292,87 @@ class WeaviateService(VectorService):
         if not self.client.schema.exists(self.index_name):
             self.client.schema.create_class(schema)
 
-    # TODO: remove this
-    async def convert_to_rerank_format(self, chunks: List) -> List:
-        docs = [
-            {
-                "content": chunk.get("text"),
-                "page_label": chunk.get("page_label"),
-                "file_url": chunk.get("file_url"),
-            }
-            for chunk in chunks
-        ]
-        return docs
+    # TODO: add response model
+    async def upsert(self, chunks: List[BaseDocumentChunk]) -> None:
+        if not self.client:
+            raise ValueError("Weaviate client is not initialized.")
 
-    async def upsert(self, embeddings: List[tuple[str, list, dict[str, Any]]]) -> None:
+        self.client.batch.configure(
+            batch_size=100,
+            dynamic=True,
+            timeout_retries=3,
+            connection_error_retries=3,
+            callback=None,
+            num_workers=2,
+        )
+
         with self.client.batch as batch:
-            for _embedding in tqdm(embeddings, desc="Upserting to Weaviate"):
-                params = {
-                    "uuid": _embedding[0],
-                    "data_object": {"text": _embedding[2]["content"], **_embedding[2]},
+            for chunk in tqdm(
+                chunks, desc=f"Upserting to Weaviate index {self.index_name}"
+            ):
+                vector_data = {
+                    "uuid": chunk.id,
+                    "data_object": {
+                        "text": chunk.content,
+                        "document_id": chunk.document_id,
+                        "doc_url": chunk.doc_url,
+                        "page_number": chunk.page_number,
+                        **(chunk.metadata if chunk.metadata else {}),
+                    },
                     "class_name": self.index_name,
-                    "vector": _embedding[1],
+                    "vector": chunk.dense_embedding,
                 }
-                batch.add_data_object(**params)
+                batch.add_data_object(**vector_data)
             batch.flush()
 
-    async def query(self, input: str, top_k: int = 4) -> List:
+    async def query(self, input: str, top_k: int = 25) -> list[BaseDocumentChunk]:
         vectors = await self._generate_vectors(input=input)
-        vector = {"vector": vectors}
-        result = (
-            self.client.query.get(
-                self.index_name.capitalize(),
-                ["text", "file_url", "page_label"],
-            )
-            .with_near_vector(vector)
-            .with_limit(top_k)
-            .do()
-        )
-        # TODO: return list[BaseDocumentChunk]
-        return result["data"]["Get"][self.index_name.capitalize()]
+        vector = {"vector": vectors[0]}
 
-    async def delete(self, file_url: str) -> None:
-        self.client.batch.delete_objects(
-            class_name=self.index_name,
-            where={"path": ["file_url"], "operator": "Equal", "valueText": file_url},
+        try:
+            response = (
+                self.client.query.get(
+                    class_name=self.index_name.capitalize(),
+                    properties=["document_id", "text", "doc_url", "page_number"],
+                )
+                .with_near_vector(vector)
+                .with_limit(top_k)
+                .do()
+            )
+            if "data" not in response:
+                logger.error(f"Missing 'data' in response: {response}")
+                return []
+
+            result_data = response["data"]["Get"][self.index_name.capitalize()]
+            document_chunks = []
+            for result in result_data:
+                document_chunk = BaseDocumentChunk(
+                    id=str(uuid.uuid4()),  # TODO: use the actual chunk id from Weaviate
+                    document_id=result["document_id"],
+                    content=result["text"],
+                    doc_url=result["doc_url"],
+                    page_number=str(result["page_number"]),
+                )
+
+                document_chunks.append(document_chunk)
+            return document_chunks
+        except KeyError as e:
+            logger.error(f"KeyError in response: Missing key {e} - Query: {input}")
+            return []
+        except Exception as e:
+            logger.error(f"Error querying Weaviate: {e}")
+            raise Exception(f"Error querying Weaviate: {e}")
+
+    async def delete(self, file_url: str) -> DeleteResponse:
+        logger.info(
+            f"Deleting from Weaviate index {self.index_name}, file_url: {file_url}"
         )
+        result = self.client.batch.delete_objects(
+            class_name=self.index_name,
+            where={"path": ["doc_url"], "operator": "Equal", "valueText": file_url},
+        )
+        num_of_deleted_chunks = result.get("results", {}).get("successful", 0)
+        return DeleteResponse(num_of_deleted_chunks=num_of_deleted_chunks)
 
 
 class AstraService(VectorService):

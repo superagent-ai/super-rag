@@ -30,7 +30,7 @@ async def ingest(payload: RequestPayload) -> Dict:
         embedding_service.generate_embeddings(
             documents=summary_documents,
             encoder=encoder,
-            index_name=f"{payload.index_name}-summary",
+            index_name=f"{payload.index_name}summary",  # TODO maybe with '-summary'?
         ),
     )
 

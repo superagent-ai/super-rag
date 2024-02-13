@@ -11,6 +11,10 @@ class RequestPayload(BaseModel):
     encoder: EncoderEnum
 
 
+class DeleteResponse(BaseModel):
+    num_of_deleted_chunks: int
+
+
 class ResponsePayload(BaseModel):
     success: bool
-    data: dict = {}
+    data: DeleteResponse

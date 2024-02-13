@@ -24,13 +24,13 @@ async def ingest(payload: RequestPayload) -> Dict:
     )
 
     await asyncio.gather(
-        embedding_service.generate_embeddings(
+        embedding_service.generate_and_upsert_embeddings(
             documents=chunks, encoder=encoder, index_name=payload.index_name
         ),
-        embedding_service.generate_embeddings(
+        embedding_service.generate_and_upsert_embeddings(
             documents=summary_documents,
             encoder=encoder,
-            index_name=f"{payload.index_name}-summary",
+            index_name=f"{payload.index_name}summary",  # TODO maybe with '-summary'?
         ),
     )
 

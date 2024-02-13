@@ -85,7 +85,9 @@ class EmbeddingService:
         except Exception as e:
             logger.error(f"Error loading document {file.url}: {e}")
 
-    async def generate_chunks(self, strategy: Optional[str]) -> List[BaseDocumentChunk]:
+    async def generate_chunks(
+        self, strategy: Optional[str] = "auto"
+    ) -> List[BaseDocumentChunk]:
         doc_chunks = []
         for file in tqdm(self.files, desc="Generating chunks"):
             try:
@@ -97,7 +99,7 @@ class EmbeddingService:
                     elements, max_characters=500, combine_text_under_n_chars=0
                 )
                 for chunk in chunks:
-                    # Ensure all metadata values are of a type acceptable to Pinecone
+                    # Ensure all metadata values are of a type acceptable
                     sanitized_metadata = {
                         key: (
                             value
@@ -106,7 +108,7 @@ class EmbeddingService:
                         )
                         for key, value in chunk.metadata.to_dict().items()
                     }
-                    chunk_id = f"chk_{uuid.uuid4()}"
+                    chunk_id = str(uuid.uuid4())  # must be a valid UUID
                     doc_chunks.append(
                         BaseDocumentChunk(
                             id=chunk_id,
@@ -130,55 +132,52 @@ class EmbeddingService:
                 logger.error(f"Error loading chunks from {file.url}: {e}")
         return doc_chunks
 
-    async def generate_embeddings(
+    async def generate_and_upsert_embeddings(
         self,
         documents: List[BaseDocumentChunk],
         encoder: BaseEncoder,
         index_name: Optional[str] = None,
-    ) -> List[tuple[str, list, dict[str, Any]]]:
+    ) -> List[BaseDocumentChunk]:
         pbar = tqdm(total=len(documents), desc="Generating embeddings")
 
-        async def safe_generate_embedding(document: BaseDocument):
+        async def safe_generate_embedding(
+            chunk: BaseDocumentChunk,
+        ) -> BaseDocumentChunk | None:
             try:
-                return await generate_embedding(document)
+                return await generate_embedding(chunk)
             except Exception as e:
-                logger.error(f"Error embedding document {document.id}: {e}")
+                logger.error(f"Error embedding document {chunk.id}: {e}")
                 return None
 
-        async def generate_embedding(document: BaseDocument):
-            if document is not None:
+        async def generate_embedding(
+            chunk: BaseDocumentChunk,
+        ) -> BaseDocumentChunk | None:
+            if chunk is not None:
                 embeddings: List[np.ndarray] = [
-                    np.array(e) for e in encoder([document.content])
+                    np.array(e) for e in encoder([chunk.content])
                 ]
 
-                logger.info(f"Embedding: {document.id}, metadata: {document.metadata}")
-                embedding = (
-                    document.id,
-                    embeddings[0].tolist(),
-                    document.metadata,
-                )
+                logger.info(f"Embedding: {chunk.id}, metadata: {chunk.metadata}")
+                chunk.dense_embedding = embeddings[0].tolist()
                 pbar.update()
-                return embedding
+                return chunk
 
         tasks = [safe_generate_embedding(document) for document in documents]
-        embeddings = await asyncio.gather(*tasks, return_exceptions=False)
+        chunks_with_embeddings = await asyncio.gather(*tasks, return_exceptions=False)
         pbar.close()
 
-        # Filter out None values which indicate failed tasks
-        embeddings = [e for e in embeddings if e is not None]
+        vector_service = get_vector_service(
+            index_name=index_name or self.index_name,
+            credentials=self.vector_credentials,
+            encoder=encoder,
+        )
+        try:
+            await vector_service.upsert(chunks=chunks_with_embeddings)
+        except Exception as e:
+            logger.error(f"Error upserting embeddings: {e}")
+            raise Exception(f"Error upserting embeddings: {e}")
 
-        if embeddings:
-            vector_service = get_vector_service(
-                index_name=index_name or self.index_name,
-                credentials=self.vector_credentials,
-                encoder=encoder,
-            )
-            try:
-                await vector_service.upsert(embeddings=embeddings)
-            except Exception as e:
-                logger.error(f"Error upserting embeddings: {e}")
-                raise Exception(f"Error upserting embeddings: {e}")
-        return embeddings
+        return chunks_with_embeddings
 
     # TODO: Do we summarize the documents or chunks here?
     async def generate_summary_documents(

@@ -18,6 +18,9 @@ Text:
 Your summary:"""
 
 
+SUMMARY_SUFFIX = "summary"
+
+
 async def completion(document: Document):
     content = _generate_content(document)
     completion = await client.chat.completions.create(

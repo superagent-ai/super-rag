@@ -15,8 +15,8 @@ class RequestPayload(BaseModel):
 
 class ResponseData(BaseModel):
     content: str
-    file_url: str
-    page_label: Optional[str]
+    doc_url: str
+    page_number: Optional[int]
 
 
 class ResponsePayload(BaseModel):

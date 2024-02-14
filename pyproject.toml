@@ -10,7 +10,7 @@ packages = [{include = "main.py"}]
 python = ">=3.9,<3.13"
 fastapi = "^0.109.2"
 uvicorn = "^0.27.1"
-weaviate-client = "^3.26.0"
+weaviate-client = "^4.1.2"
 llama-index = "^0.9.46"
 pinecone-client = "^3.0.2"
 qdrant-client = "^1.7.3"
@@ -25,16 +25,14 @@ openai = "^1.12.0"
 tqdm = "^4.66.2"
 cohere = "^4.46"
 cmake = "^3.28.1"
-fastembed = "^0.2.1"
 pypdf = "^4.0.1"
 docx2txt = "^0.8"
 python-dotenv = "^1.0.1"
-
-[tool.poetry.extras]
-fastembed = ["fastembed"]
+unstructured = {version = "^0.12.4", extras = ["all-docs"], python = "<3.12"}
 
 [tool.poetry.group.dev.dependencies]
 termcolor = "^2.4.0"
+ipykernel = "^6.29.2"
 
 [build-system]
 requires = ["poetry-core"]

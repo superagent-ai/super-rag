@@ -9,6 +9,7 @@ from encoders import BaseEncoder
 class CohereEncoder(BaseEncoder):
     client: Optional[cohere.Client] = None
     type: str = "cohere"
+    dimension: int = 1024  # https://docs.cohere.com/reference/embed
 
     def __init__(
         self,

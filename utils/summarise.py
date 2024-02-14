@@ -1,28 +1,28 @@
 from decouple import config
-from llama_index import Document
 from openai import AsyncOpenAI
+
+from models.document import BaseDocumentChunk
+
+SUMMARY_SUFFIX = "summary"
 
 client = AsyncOpenAI(
     api_key=config("OPENAI_API_KEY"),
 )
 
 
-def _generate_content(document: Document) -> str:
+def _generate_content(*, document: BaseDocumentChunk) -> str:
     return f"""Make an in depth summary the block of text below.
 
 Text:
 ------------------------------------------
-{document.get_content()}
+{document.content}
 ------------------------------------------
 
 Your summary:"""
 
 
-SUMMARY_SUFFIX = "summary"
-
-
-async def completion(document: Document):
-    content = _generate_content(document)
+async def completion(*, document: BaseDocumentChunk) -> str:
+    content = _generate_content(document=document)
     completion = await client.chat.completions.create(
         messages=[
             {
@@ -33,4 +33,4 @@ async def completion(document: Document):
         model="gpt-3.5-turbo-16k",
     )
 
-    return completion.choices[0].message.content
+    return completion.choices[0].message.content or ""

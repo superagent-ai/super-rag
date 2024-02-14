@@ -55,7 +55,6 @@ class VectorService(ABC):
         # Avoid duplications, TODO: fix ingestion for duplications
         # Deduplicate documents based on content while preserving order
         seen = set()
-        print(documents)
         deduplicated_documents = [
             doc
             for doc in documents
@@ -413,15 +412,16 @@ class AstraService(VectorService):
         ]
         return docs
 
-    async def upsert(self, embeddings: List[tuple[str, list, dict[str, Any]]]) -> None:
+    async def upsert(self, chunks: List[BaseDocumentChunk]) -> None:
+
         documents = [
             {
-                "_id": _embedding[0],
-                "text": _embedding[2]["content"],
-                "$vector": _embedding[1],
-                **_embedding[2],
+                "_id": chunk.id,
+                "text": chunk.content,
+                "$vector": chunk.dense_embedding,
+                **chunk.metadata,
             }
-            for _embedding in tqdm(embeddings, desc="Upserting to Astra")
+            for chunk in tqdm(chunks, desc="Upserting to Astra")
         ]
         for i in range(0, len(documents), 5):
             self.collection.insert_many(documents=documents[i : i + 5])
@@ -429,10 +429,20 @@ class AstraService(VectorService):
     async def query(self, input: str, top_k: int = 4) -> List:
         vectors = await self._generate_vectors(input=input)
         results = self.collection.vector_find(
-            vector=vectors, limit=top_k, fields={"text", "page_label", "file_url"}
+            vector=vectors[0],
+            limit=top_k,
+            fields={"text", "page_number", "source", "document_id"},
         )
-        # TODO: return list[BaseDocumentChunk]
-        return results
+        return [
+            BaseDocumentChunk(
+                id=result.get("_id"),
+                document_id=result.get("document_id"),
+                content=result.get("text"),
+                doc_url=result.get("source"),
+                page_number=result.get("page_number"),
+            )
+            for result in results
+        ]
 
     async def delete(self, file_url: str) -> None:
         self.collection.delete_many(filter={"file_url": file_url})

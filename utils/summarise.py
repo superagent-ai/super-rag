@@ -3,6 +3,8 @@ from openai import AsyncOpenAI
 
 from models.document import BaseDocumentChunk
 
+SUMMARY_SUFFIX = "summary"
+
 client = AsyncOpenAI(
     api_key=config("OPENAI_API_KEY"),
 )

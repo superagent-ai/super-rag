@@ -6,6 +6,7 @@ from fastapi import APIRouter
 
 from models.ingest import RequestPayload
 from service.embedding import EmbeddingService, get_encoder
+from utils.summarise import SUMMARY_SUFFIX
 
 router = APIRouter()
 
@@ -30,7 +31,7 @@ async def ingest(payload: RequestPayload) -> Dict:
         embedding_service.generate_and_upsert_embeddings(
             documents=summary_documents,
             encoder=encoder,
-            index_name=f"{payload.index_name}summary",  # TODO maybe with '-summary'?
+            index_name=f"{payload.index_name}{SUMMARY_SUFFIX}",
         ),
     )
 

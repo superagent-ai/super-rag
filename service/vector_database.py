@@ -1,6 +1,6 @@
 import uuid
 from abc import ABC, abstractmethod
-from typing import Any, List
+from typing import List
 
 import weaviate
 from astrapy.db import AstraDB
@@ -413,7 +413,6 @@ class AstraService(VectorService):
         return docs
 
     async def upsert(self, chunks: List[BaseDocumentChunk]) -> None:
-
         documents = [
             {
                 "_id": chunk.id,

@@ -16,6 +16,7 @@ class BaseDocumentChunk(BaseModel):
     document_id: str
     content: str
     doc_url: str
+    page_number: int | None = None
     metadata: dict | None = None
     dense_embedding: Optional[List[float]] = None
 

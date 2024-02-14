@@ -11,7 +11,7 @@ async def query(payload: RequestPayload):
     chunks = await _query(payload=payload)
     response_data = [
         ResponseData(
-            content=chunk.content, doc_url=chunk.doc_url, page_label=chunk.page_number
+            content=chunk.content, doc_url=chunk.doc_url, page_number=chunk.page_number
         )
         for chunk in chunks
     ]

@@ -55,6 +55,7 @@ class VectorService(ABC):
         # Avoid duplications, TODO: fix ingestion for duplications
         # Deduplicate documents based on content while preserving order
         seen = set()
+        print(documents)
         deduplicated_documents = [
             doc
             for doc in documents
@@ -239,20 +240,21 @@ class QdrantService(VectorService):
         vectors = await self._generate_vectors(input=input)
         search_result = self.client.search(
             collection_name=self.index_name,
-            query_vector=("content", vectors),
+            query_vector=("content", vectors[0]),
             limit=top_k,
-            # query_filter=rest.Filter(
-            #    must=[
-            #        rest.FieldCondition(
-            #            key="datasource_id",
-            #            match=rest.MatchValue(value=datasource_id),
-            #        ),
-            #    ]
-            # ),
             with_payload=True,
         )
-        # TODO: return list[BaseDocumentChunk]
-        return search_result
+        return [
+            BaseDocumentChunk(
+                id=result.id,
+                document_id=result.payload.get("document_id"),
+                content=result.payload.get("content"),
+                doc_url=result.payload.get("doc_url"),
+                page_number=result.payload.get("page_number"),
+                metadata={**result.payload},
+            )
+            for result in search_result
+        ]
 
     async def delete(self, file_url: str) -> None:
         self.client.delete(

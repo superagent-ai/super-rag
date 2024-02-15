@@ -16,9 +16,9 @@ from encoders import BaseEncoder
 from models.document import BaseDocument, BaseDocumentChunk
 from models.file import File
 from models.ingest import EncoderEnum
-from service.vector_database import get_vector_service
 from utils.logger import logger
 from utils.summarise import completion
+from vectordbs import get_vector_service
 
 
 class EmbeddingService:

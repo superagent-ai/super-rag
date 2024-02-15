@@ -24,7 +24,8 @@ def create_route_layer() -> RouteLayer:
             score_threshold=0.5,
         )
     ]
-    encoder = CohereEncoder(cohere_api_key=config("COHERE_API_KEY"))
+    cohere_api_key = config("COHERE_API_KEY", None)
+    encoder = CohereEncoder(cohere_api_key=cohere_api_key) if cohere_api_key else None
     return RouteLayer(encoder=encoder, routes=routes)
 
 

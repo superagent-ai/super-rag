@@ -2,9 +2,9 @@ from typing import List
 
 from qdrant_client import QdrantClient
 from qdrant_client.http import models as rest
+from semantic_router.encoders import BaseEncoder
 from tqdm import tqdm
 
-from semantic_router.encoders import BaseEncoder
 from models.document import BaseDocumentChunk
 from vectordbs.base import BaseVectorDatabase
 

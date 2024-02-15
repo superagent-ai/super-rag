@@ -2,7 +2,7 @@ from typing import List, Optional
 
 from pydantic import BaseModel
 
-from models.ingest import EncoderEnum, Encoder
+from models.ingest import Encoder
 from models.vector_database import VectorDatabase
 
 

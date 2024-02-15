@@ -2,9 +2,9 @@ from abc import ABC, abstractmethod
 from typing import List
 
 from decouple import config
+from semantic_router.encoders import BaseEncoder
 from tqdm import tqdm
 
-from semantic_router.encoders import BaseEncoder
 from models.delete import DeleteResponse
 from models.document import BaseDocumentChunk
 from utils.logger import logger

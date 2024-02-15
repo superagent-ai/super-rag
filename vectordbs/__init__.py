@@ -3,6 +3,7 @@ from typing import Optional
 from dotenv import load_dotenv
 from semantic_router.encoders import BaseEncoder
 from semantic_router.encoders.openai import OpenAIEncoder
+
 from models.vector_database import VectorDatabase
 from vectordbs.astra import AstraService
 from vectordbs.base import BaseVectorDatabase

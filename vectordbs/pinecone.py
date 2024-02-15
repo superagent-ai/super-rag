@@ -1,9 +1,9 @@
 from typing import List
 
 from pinecone import Pinecone, ServerlessSpec
+from semantic_router.encoders import BaseEncoder
 from tqdm import tqdm
 
-from semantic_router.encoders import BaseEncoder
 from models.delete import DeleteResponse
 from models.document import BaseDocumentChunk
 from utils.logger import logger

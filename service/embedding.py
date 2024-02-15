@@ -6,21 +6,20 @@ from typing import Any, List, Optional
 
 import numpy as np
 import requests
+from semantic_router.encoders import (
+    BaseEncoder,
+    CohereEncoder,
+    HuggingFaceEncoder,
+    OpenAIEncoder,
+)
 from tqdm import tqdm
 from unstructured.chunking.title import chunk_by_title
 from unstructured.documents.elements import Element
 from unstructured.partition.auto import partition
 
-
-from semantic_router.encoders import (
-    BaseEncoder,
-    CohereEncoder,
-    OpenAIEncoder,
-    HuggingFaceEncoder,
-)
 from models.document import BaseDocument, BaseDocumentChunk
 from models.file import File
-from models.ingest import EncoderEnum, Encoder
+from models.ingest import Encoder, EncoderEnum
 from utils.logger import logger
 from utils.summarise import completion
 from vectordbs import get_vector_service

@@ -24,8 +24,7 @@ async def ingest(payload: RequestPayload) -> Dict:
     summary_documents = await embedding_service.generate_summary_documents(
         documents=chunks
     )
-    print(summary_documents)
-    return {"success": True}
+
     await asyncio.gather(
         embedding_service.generate_and_upsert_embeddings(
             documents=chunks, encoder=encoder, index_name=payload.index_name

@@ -2,11 +2,12 @@ from pydantic import BaseModel
 
 from models.ingest import EncoderEnum
 from models.vector_database import VectorDatabase
+from models.file import File
 
 
 class RequestPayload(BaseModel):
     index_name: str
-    file_url: str
+    files: list[File]
     vector_database: VectorDatabase
     encoder: EncoderEnum
 

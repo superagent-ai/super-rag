@@ -14,9 +14,15 @@ class EncoderEnum(str, Enum):
     fastembed = "fastembed"
 
 
+class Encoder(BaseModel):
+    name: str
+    type: str
+    dimensions: Optional[int] = None
+
+
 class RequestPayload(BaseModel):
     files: List[File]
-    encoder: EncoderEnum
+    encoder: Encoder
     vector_database: VectorDatabase
     index_name: str
     webhook_url: Optional[str] = None

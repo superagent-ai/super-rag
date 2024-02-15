@@ -1,6 +1,6 @@
 from pydantic import BaseModel
 
-from models.ingest import EncoderEnum
+from models.ingest import Encoder
 from models.vector_database import VectorDatabase
 
 
@@ -8,7 +8,7 @@ class RequestPayload(BaseModel):
     index_name: str
     file_url: str
     vector_database: VectorDatabase
-    encoder: EncoderEnum
+    encoder: Encoder
 
 
 class DeleteResponse(BaseModel):

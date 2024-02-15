@@ -10,11 +10,12 @@ router = APIRouter()
 
 @router.delete("/delete", response_model=ResponsePayload)
 async def delete(payload: RequestPayload):
-    encoder = get_encoder(encoder_type=payload.encoder)
+    encoder = get_encoder(encoder_config=payload.encoder)
     vector_service: BaseVectorDatabase = get_vector_service(
         index_name=payload.index_name,
         credentials=payload.vector_database,
         encoder=encoder,
+        dimensions=encoder.dimensions,
     )
     data = await vector_service.delete(file_url=payload.file_url)
     return ResponsePayload(success=True, data=data)

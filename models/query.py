@@ -2,7 +2,7 @@ from typing import List, Optional
 
 from pydantic import BaseModel
 
-from models.ingest import EncoderEnum
+from models.ingest import Encoder
 from models.vector_database import VectorDatabase
 
 
@@ -10,7 +10,7 @@ class RequestPayload(BaseModel):
     input: str
     vector_database: VectorDatabase
     index_name: str
-    encoder: EncoderEnum = EncoderEnum.openai
+    encoder: Encoder
 
 
 class ResponseData(BaseModel):

@@ -17,9 +17,10 @@ async def ingest(payload: RequestPayload) -> Dict:
         files=payload.files,
         index_name=payload.index_name,
         vector_credentials=payload.vector_database,
+        dimensions=payload.encoder.dimensions,
     )
     chunks = await embedding_service.generate_chunks()
-    encoder = get_encoder(encoder_type=payload.encoder)
+    encoder = get_encoder(encoder_config=payload.encoder)
     summary_documents = await embedding_service.generate_summary_documents(
         documents=chunks
     )

@@ -6,26 +6,37 @@ from typing import Any, List, Optional
 
 import numpy as np
 import requests
+from semantic_router.encoders import (
+    BaseEncoder,
+    CohereEncoder,
+    HuggingFaceEncoder,
+    OpenAIEncoder,
+)
 from tqdm import tqdm
 from unstructured.chunking.title import chunk_by_title
 from unstructured.documents.elements import Element
 from unstructured.partition.auto import partition
 
-import encoders
-from encoders import BaseEncoder
 from models.document import BaseDocument, BaseDocumentChunk
 from models.file import File
-from models.ingest import EncoderEnum
+from models.ingest import Encoder, EncoderEnum
 from utils.logger import logger
 from utils.summarise import completion
 from vectordbs import get_vector_service
 
 
 class EmbeddingService:
-    def __init__(self, files: List[File], index_name: str, vector_credentials: dict):
+    def __init__(
+        self,
+        files: List[File],
+        index_name: str,
+        vector_credentials: dict,
+        dimensions: Optional[int],
+    ):
         self.files = files
         self.index_name = index_name
         self.vector_credentials = vector_credentials
+        self.dimensions = dimensions
 
     def _get_datasource_suffix(self, type: str) -> str:
         suffixes = {
@@ -170,6 +181,7 @@ class EmbeddingService:
             index_name=index_name or self.index_name,
             credentials=self.vector_credentials,
             encoder=encoder,
+            dimensions=self.dimensions,
         )
         try:
             await vector_service.upsert(chunks=chunks_with_embeddings)
@@ -199,14 +211,15 @@ class EmbeddingService:
         return summary_documents
 
 
-def get_encoder(*, encoder_type: EncoderEnum) -> encoders.BaseEncoder:
+def get_encoder(*, encoder_config: Encoder) -> BaseEncoder:
     encoder_mapping = {
-        EncoderEnum.cohere: encoders.CohereEncoder,
-        EncoderEnum.openai: encoders.OpenAIEncoder,
-        EncoderEnum.huggingface: encoders.HuggingFaceEncoder,
+        EncoderEnum.cohere: CohereEncoder,
+        EncoderEnum.openai: OpenAIEncoder,
+        EncoderEnum.huggingface: HuggingFaceEncoder,
     }
-
-    encoder_class = encoder_mapping.get(encoder_type)
+    encoder_provider = encoder_config.type
+    encoder = encoder_config.name
+    encoder_class = encoder_mapping.get(encoder_provider)
     if encoder_class is None:
-        raise ValueError(f"Unsupported encoder: {encoder_type}")
-    return encoder_class()
+        raise ValueError(f"Unsupported provider: {encoder_provider}")
+    return encoder_class(name=encoder)

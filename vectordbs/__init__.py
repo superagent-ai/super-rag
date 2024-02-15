@@ -31,8 +31,3 @@ def get_vector_service(
         credentials=dict(credentials.config),
         encoder=encoder,
     )
-
-
-__all__ = [
-    "BaseVectorDatabase",
-]

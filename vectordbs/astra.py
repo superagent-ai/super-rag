@@ -5,7 +5,7 @@ from tqdm import tqdm
 
 from encoders.base import BaseEncoder
 from models.document import BaseDocumentChunk
-from vectordbs import BaseVectorDatabase
+from vectordbs.base import BaseVectorDatabase
 
 
 class AstraService(BaseVectorDatabase):

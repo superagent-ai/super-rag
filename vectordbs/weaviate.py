@@ -8,7 +8,7 @@ from encoders.base import BaseEncoder
 from models.delete import DeleteResponse
 from models.document import BaseDocumentChunk
 from utils.logger import logger
-from vectordbs import BaseVectorDatabase
+from vectordbs.base import BaseVectorDatabase
 
 
 class WeaviateService(BaseVectorDatabase):

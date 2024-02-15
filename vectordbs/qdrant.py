@@ -4,7 +4,7 @@ from qdrant_client import QdrantClient
 from qdrant_client.http import models as rest
 from tqdm import tqdm
 
-from encoders.base import BaseEncoder
+from semantic_router.encoders import BaseEncoder
 from models.document import BaseDocumentChunk
 from vectordbs.base import BaseVectorDatabase
 

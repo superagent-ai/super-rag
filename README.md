@@ -23,7 +23,11 @@ Input example:
         }
     },
     "index_name": "my_index",
-    "encoder": "my_encoder"
+    "encoder": {
+        "type": "openai",
+        "name": "text-embedding-3-small",
+        "dimensions": 1536  # encoder depends on the provider and model
+    },
     "webhook_url": "https://my-webhook-url"
 }
 ```
@@ -42,7 +46,10 @@ Input example:
         }
     },
     "index_name": "my_index",
-    "encoder": "my_encoder",
+    "encoder": {
+        "type": "openai",
+        "name": "text-embedding-3-small",
+    } 
 }
 ```
 

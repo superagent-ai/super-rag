@@ -44,7 +44,7 @@ async def get_documents(
 async def query(payload: RequestPayload) -> list[BaseDocumentChunk]:
     rl = create_route_layer()
     decision = rl(payload.input).name
-    encoder = get_encoder(encoder_type=payload.encoder)
+    encoder = get_encoder(encoder_config=payload.encoder)
 
     if decision == "summarize":
         vector_service: BaseVectorDatabase = get_vector_service(

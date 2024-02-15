@@ -3,7 +3,7 @@ from typing import List
 from astrapy.db import AstraDB
 from tqdm import tqdm
 
-from encoders.base import BaseEncoder
+from semantic_router.encoders import BaseEncoder
 from models.document import BaseDocumentChunk
 from vectordbs.base import BaseVectorDatabase
 

@@ -4,7 +4,7 @@ from typing import List
 import weaviate
 from tqdm import tqdm
 
-from encoders.base import BaseEncoder
+from semantic_router.encoders import BaseEncoder
 from models.delete import DeleteResponse
 from models.document import BaseDocumentChunk
 from utils.logger import logger

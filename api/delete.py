@@ -17,5 +17,8 @@ async def delete(payload: RequestPayload):
         encoder=encoder,
         dimensions=encoder.dimensions,
     )
-    data = await vector_service.delete(file_url=payload.file_url)
+
+    for file in payload.files:
+        data = await vector_service.delete(file_url=file.url)
+
     return ResponsePayload(success=True, data=data)

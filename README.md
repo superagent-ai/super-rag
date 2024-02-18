@@ -49,7 +49,8 @@ Input example:
     "encoder": {
         "type": "openai",
         "name": "text-embedding-3-small",
-    } 
+    }
+    "session_id": "my_session_id" # keeps micro-vm sessions and enables caching 
 }
 ```
 

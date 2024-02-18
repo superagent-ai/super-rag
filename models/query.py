@@ -11,6 +11,7 @@ class RequestPayload(BaseModel):
     vector_database: VectorDatabase
     index_name: str
     encoder: Encoder
+    session_id: Optional[str] = None
 
 
 class ResponseData(BaseModel):

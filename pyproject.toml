@@ -29,6 +29,7 @@ pypdf = "^4.0.1"
 docx2txt = "^0.8"
 python-dotenv = "^1.0.1"
 unstructured = {version = "^0.12.4", extras = ["all-docs"], python = "<3.12"}
+e2b = "^0.14.4"
 
 [tool.poetry.group.dev.dependencies]
 termcolor = "^2.4.0"
@@ -43,6 +44,7 @@ build-backend = "poetry.core.masonry.api"
 exclude = [
     "*/test_*.py",
     "*/.venv/*.py",
+    "*/sandboxes/*",
 ]
 ignore_decorators = ["@app.route", "@require_*"]
 ignore_names = ["visit_*", "do_*"]
@@ -57,4 +59,5 @@ exclude = [
     "*/docs/*.py",
     "*/test_*.py",
     "*/.venv/*.py",
+    "*/sandboxes/*",
 ]

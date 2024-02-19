@@ -10,4 +10,4 @@ lint_diff: PYTHON_FILES=$(shell git diff --name-only --diff-filter=d master | gr
 lint lint_diff:
 	poetry run black $(PYTHON_FILES) --check
 	poetry run ruff .
-	poetry run vulture . --exclude=venv
+	poetry run vulture . --exclude=venv 

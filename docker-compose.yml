@@ -1,0 +1,15 @@
+version: "3.8"
+services:
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    environment:
+      API_BASE_URL: ${API_BASE_URL}
+      OPENAI_API_KEY: ${OPENAI_API_KEY}
+      COHERE_API_KEY: ${COHERE_API_KEY}
+      PINECONE_API_KEY: ${PINECONE_API_KEY}
+      PINECONE_HOST: ${PINECONE_HOST}
+      PINECONE_INDEX: ${PINECONE_INDEX}
+    volumes:
+      - ./pyproject.toml:/app/pyproject.toml

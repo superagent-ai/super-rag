@@ -1,0 +1,92 @@
+[tool.poetry]
+name = "super-rag"
+version = "0.0.2"
+description = ""
+authors = ["Ismail Pelaseyed"]
+readme = "README.md"
+packages = [{include = "main.py"}]
+
+# Supports from 3.9 to 3.12 exclusively
+[tool.poetry.dependencies]
+python = ">=3.8,<3.13"
+torch = [
+    {url = "https://download.pytorch.org/whl/cpu/torch-2.2.0%2Bcpu-cp38-cp38-linux_x86_64.whl#sha256=f72e7ce8010aa8797665ff6c4c1d259c28f3a51f332762d9de77f8a20277817f", markers = "python_version == '3.8' and sys_platform == 'linux'"},
+    {url = "https://download.pytorch.org/whl/cpu/torch-2.2.0%2Bcpu-cp38-cp38-win_amd64.whl#sha256=15e05748815545b6eb99196c0219822b210a5eff0dc194997a283534b8c98d7c", markers = "python_version == '3.8' and sys_platform == 'win32'"},
+    {url = "https://download.pytorch.org/whl/cpu/torch-2.2.0%2Bcpu-cp39-cp39-linux_x86_64.whl#sha256=4ddaf3393f5123da4a83a53f98fb9c9c64c53d0061da3c7243f982cdfe9eb888", markers = "python_version == '3.9' and sys_platform == 'linux'"},
+    {url = "https://download.pytorch.org/whl/cpu/torch-2.2.0%2Bcpu-cp39-cp39-win_amd64.whl#sha256=d053976a4f9ca3bace6e4191e0b6e0bcffbc29f70d419b14d01228b371335467", markers = "python_version == '3.9' and sys_platform == 'win32'"},
+    {url = "https://download.pytorch.org/whl/cpu/torch-2.2.0%2Bcpu-cp310-cp310-linux_x86_64.whl#sha256=5f907293f5a58619c1c520380f17641f76400a136474a4b1a66c363d2563fe5e", markers = "python_version == '3.10' and sys_platform == 'linux'"},
+    {url = "https://download.pytorch.org/whl/cpu/torch-2.2.0%2Bcpu-cp310-cp310-win_amd64.whl#sha256=15a657038eea92ac5db6ab97b30bd4b5345741b49553b2a7e552e80001297124", markers = "python_version == '3.10' and sys_platform == 'win32'"},
+    {url = "https://download.pytorch.org/whl/cpu/torch-2.2.0%2Bcpu-cp311-cp311-linux_x86_64.whl#sha256=2a8ff4440c1f024ad7982018c378470d2ae0a72f2bc269a22b1a677e09bdd3b1", markers = "python_version == '3.11' and sys_platform == 'linux'"},
+    {url = "https://download.pytorch.org/whl/cpu/torch-2.2.0%2Bcpu-cp311-cp311-win_amd64.whl#sha256=58194066e594cd8aff27ddb746399d040900cc0e8a331d67ea98499777fa4d31", markers = "python_version == '3.11' and sys_platform == 'win32'"},
+    {url = "https://download.pytorch.org/whl/cpu/torch-2.2.0%2Bcpu-cp312-cp312-linux_x86_64.whl#sha256=8258824bec0181e01a086aef5809016116a97626af2dcbf932d4e0b192d9c1b8", markers = "python_version == '3.12' and sys_platform == 'linux'"},
+    {url = "https://download.pytorch.org/whl/cpu/torch-2.2.0%2Bcpu-cp312-cp312-win_amd64.whl#sha256=5b40dc66914c02d564365f991ec9a6b18cbaa586610e3b160ef559b2ce18c6c8", markers = "python_version == '3.12' and sys_platform == 'win32'"},
+    {url = "https://download.pytorch.org/whl/cpu/torch-2.2.0-cp310-none-macosx_10_9_x86_64.whl#sha256=531e188a1a5e2d5cea3d7f9b6eabe25f0393f64e664c98f6e8b21875f2054f93", markers = "python_version == '3.10' and sys_platform == 'darwin' and platform_machine == 'x86_64'"},
+    {url = "https://download.pytorch.org/whl/cpu/torch-2.2.0-cp310-none-macosx_11_0_arm64.whl#sha256=900a54217d9b50fd112155ced75f89081f23c85aa598b5fe03c9e0da00e53927", markers = "python_version == '3.10' and sys_platform == 'darwin' and platform_machine == 'arm64'"},
+    {url = "https://download.pytorch.org/whl/cpu/torch-2.2.0-cp311-cp311-manylinux_2_17_aarch64.manylinux2014_aarch64.whl#sha256=4d819ad23591e0cd8a3c0b740d84eaae6fd09928cf2cadcebde8ae605ac2db8b", markers = "python_version == '3.11' and platform_machine == 'aarch64'"},
+    {url = "https://download.pytorch.org/whl/cpu/torch-2.2.0-cp311-none-macosx_10_9_x86_64.whl#sha256=c82a7c10da1bac5a319568671dc7bbf8f7b17c551fc233e5a80803bab9ef0d04", markers = "python_version == '3.11' and sys_platform == 'darwin' and platform_machine == 'x86_64'"},
+    {url = "https://download.pytorch.org/whl/cpu/torch-2.2.0-cp311-none-macosx_11_0_arm64.whl#sha256=a9b1af4fdda3b2b4824e5f12333d7dbd2279130241586972d96aceb98b44ac9b", markers = "python_version == '3.11' and sys_platform == 'darwin' and platform_machine == 'arm64'"},
+    {url = "https://download.pytorch.org/whl/cpu/torch-2.2.0-cp312-cp312-manylinux_2_17_aarch64.manylinux2014_aarch64.whl#sha256=a8c22a1911b504265d9a188f3f273c999b0552d67679da7f276c1103a46663f8", markers = "python_version == '3.12' and platform_machine == 'aarch64'"},
+    {url = "https://download.pytorch.org/whl/cpu/torch-2.2.0-cp312-none-macosx_10_9_x86_64.whl#sha256=34dc8cee731a6cf9e2654e8ccbc24bdfdc19eae48a63dc3ebea4ac4ae4448a79", markers = "python_version == '3.12' and sys_platform == 'darwin' and platform_machine == 'x86_64'"},
+    {url = "https://download.pytorch.org/whl/cpu/torch-2.2.0-cp312-none-macosx_11_0_arm64.whl#sha256=45ee2e601aa5caa9d195dd5a8f4e0f011ac78f09c8522924fe1b42dace02cac0", markers = "python_version == '3.12' and sys_platform == 'darwin' and platform_machine == 'arm64'"},
+    {url = "https://download.pytorch.org/whl/cpu/torch-2.2.0-cp38-cp38-manylinux_2_17_aarch64.manylinux2014_aarch64.whl#sha256=a5f9772bb95efafd906de683104af2301ef18608d0c7f372ff1a5a61bf792b88", markers = "python_version == '3.8' and platform_machine == 'aarch64'"},
+    {url = "https://download.pytorch.org/whl/cpu/torch-2.2.0-cp38-none-macosx_10_9_x86_64.whl#sha256=9fa4ba2c30ec294a25bb4b7a15a7a06120d3aae6f8f8de740391bd65239c8006", markers = "python_version == '3.8' and sys_platform == 'darwin' and platform_machine == 'x86_64'"},
+    {url = "https://download.pytorch.org/whl/cpu/torch-2.2.0-cp38-none-macosx_11_0_arm64.whl#sha256=4c2ac87d0717cdb62a9142534cf0859851ef38d93a282e9dc91518113a7a8033", markers = "python_version == '3.8' and sys_platform == 'darwin' and platform_machine == 'arm64'"},
+    {url = "https://download.pytorch.org/whl/cpu/torch-2.2.0-cp39-cp39-manylinux_2_17_aarch64.manylinux2014_aarch64.whl#sha256=e6d2550a8beadf79ce48271aa2a281175e91a3065fed385d2a8b9802c2a744db", markers = "python_version == '3.9' and platform_machine == 'aarch64'"},
+    {url = "https://download.pytorch.org/whl/cpu/torch-2.2.0-cp39-none-macosx_10_9_x86_64.whl#sha256=8d34c57aad38ac92535acaf297cbee6036f0319286c60267a4a073e1fc169718", markers = "python_version == '3.9' and sys_platform == 'darwin' and platform_machine == 'x86_64'"},
+    {url = "https://download.pytorch.org/whl/cpu/torch-2.2.0-cp39-none-macosx_11_0_arm64.whl#sha256=c59bb377b4fac6de3066ba8f159b9600458b09cc32a3f63d0030db995a51fea9", markers = "python_version == '3.9' and sys_platform == 'darwin' and platform_machine == 'arm64'"},
+]
+fastapi = "^0.109.2"
+uvicorn = "^0.27.1"
+weaviate-client = "^4.1.2"
+llama-index = "^0.9.46"
+pinecone-client = "^3.0.2"
+qdrant-client = "^1.7.3"
+ruff = "^0.2.1"
+black = "^23.12.1"
+flake8 = "^7.0.0"
+vulture = "^2.11"
+python-decouple = "^3.8"
+semantic-router = "^0.0.20"
+astrapy = "^0.7.4"
+openai = "^1.12.0"
+tqdm = "^4.66.2"
+cohere = "^4.46"
+cmake = "^3.28.1"
+pypdf = "^4.0.1"
+docx2txt = "^0.8"
+python-dotenv = "^1.0.1"
+unstructured = {version = "^0.12.4", extras = ["all-docs"], python = "<3.12"}
+
+[[tool.poetry.source]]
+name = "pytorch"
+url = "https://download.pytorch.org/whl/cpu/"
+priority = "explicit"
+
+[tool.poetry.group.dev.dependencies]
+termcolor = "^2.4.0"
+ipykernel = "^6.29.2"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+
+
+[tool.vulture]
+exclude = [
+    "*/test_*.py",
+    "*/.venv/*.py",
+]
+ignore_decorators = ["@app.route", "@require_*"]
+ignore_names = ["visit_*", "do_*"]
+make_whitelist = true
+min_confidence = 100
+paths = ["."]
+sort_by_size = true
+verbose = false
+
+[tool.ruff]
+exclude = [
+    "*/docs/*.py",
+    "*/test_*.py",
+    "*/.venv/*.py",
+]

@@ -5,6 +5,7 @@ from semantic_router.route import Route
 
 from models.document import BaseDocumentChunk
 from models.query import RequestPayload
+from service.code_interpreter import CodeInterpreterService
 from service.embedding import get_encoder
 from utils.logger import logger
 from utils.summarise import SUMMARY_SUFFIX
@@ -55,9 +56,21 @@ async def query(payload: RequestPayload) -> list[BaseDocumentChunk]:
         )
         return await get_documents(vector_service=vector_service, payload=payload)
 
-    vector_service: BaseVectorDatabase = get_vector_service(
-        index_name=payload.index_name,
-        credentials=payload.vector_database,
-        encoder=encoder,
-    )
+    # vector_service: BaseVectorDatabase = get_vector_service(
+    #    index_name=payload.index_name,
+    #    credentials=payload.vector_database,
+    #    encoder=encoder,
+    # )
+
+    async with CodeInterpreterService(
+        session_id=payload.session_id,
+        file_urls=[
+            "https://raw.githubusercontent.com/datasciencedojo/datasets/master/titanic.csv"
+        ],
+    ) as service:
+        code = "df0.info()"
+        output = await service.run_python(code=code)
+        print(output.stderr)
+        print(output.stdout)
+
     return await get_documents(vector_service=vector_service, payload=payload)

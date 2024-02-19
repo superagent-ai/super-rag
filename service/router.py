@@ -5,7 +5,8 @@ from semantic_router.route import Route
 
 from models.document import BaseDocumentChunk
 from models.query import RequestPayload
-from service.code_interpreter import CodeInterpreterService
+
+# from service.code_interpreter import CodeInterpreterService
 from service.embedding import get_encoder
 from utils.logger import logger
 from utils.summarise import SUMMARY_SUFFIX

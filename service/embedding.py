@@ -1,5 +1,4 @@
 import asyncio
-import aiohttp
 import copy
 import uuid
 from tempfile import NamedTemporaryFile
@@ -10,9 +9,9 @@ import requests
 from semantic_router.encoders import (
     BaseEncoder,
     CohereEncoder,
+    FastEmbedEncoder,
     HuggingFaceEncoder,
     OpenAIEncoder,
-    FastEmbedEncoder,
 )
 from tqdm import tqdm
 from unstructured.chunking.title import chunk_by_title

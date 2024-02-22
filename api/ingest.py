@@ -6,7 +6,8 @@ from fastapi import APIRouter
 
 from models.ingest import RequestPayload
 from service.embedding import EmbeddingService, get_encoder
-from utils.summarise import SUMMARY_SUFFIX
+
+# from utils.summarise import SUMMARY_SUFFIX
 
 router = APIRouter()
 

@@ -9,6 +9,7 @@ import requests
 from semantic_router.encoders import (
     BaseEncoder,
     CohereEncoder,
+    FastEmbedEncoder,
     HuggingFaceEncoder,
     OpenAIEncoder,
 )
@@ -69,7 +70,10 @@ class EmbeddingService:
                 temp_file.write(response.content)
                 temp_file.flush()
             elements = partition(
-                file=temp_file, include_page_breaks=True, strategy=strategy
+                file=temp_file,
+                include_page_breaks=True,
+                strategy=strategy,
+                skip_infer_table_types=["pdf"],
             )
         return elements
 
@@ -107,7 +111,7 @@ class EmbeddingService:
                 if not document:
                     continue
                 chunks = chunk_by_title(
-                    elements, max_characters=500, combine_text_under_n_chars=0
+                    elements, max_characters=1500, new_after_n_chars=1000
                 )
                 for chunk in chunks:
                     # Ensure all metadata values are of a type acceptable
@@ -150,15 +154,17 @@ class EmbeddingService:
         index_name: Optional[str] = None,
     ) -> List[BaseDocumentChunk]:
         pbar = tqdm(total=len(documents), desc="Generating embeddings")
+        sem = asyncio.Semaphore(10)  # Limit to 10 concurrent tasks
 
         async def safe_generate_embedding(
             chunk: BaseDocumentChunk,
         ) -> BaseDocumentChunk | None:
-            try:
-                return await generate_embedding(chunk)
-            except Exception as e:
-                logger.error(f"Error embedding document {chunk.id}: {e}")
-                return None
+            async with sem:
+                try:
+                    return await generate_embedding(chunk)
+                except Exception as e:
+                    logger.error(f"Error embedding document {chunk.id}: {e}")
+                    return None
 
         async def generate_embedding(
             chunk: BaseDocumentChunk,
@@ -167,8 +173,6 @@ class EmbeddingService:
                 embeddings: List[np.ndarray] = [
                     np.array(e) for e in encoder([chunk.content])
                 ]
-
-                logger.info(f"Embedding: {chunk.id}, metadata: {chunk.metadata}")
                 chunk.dense_embedding = embeddings[0].tolist()
                 pbar.update()
                 return chunk
@@ -191,23 +195,38 @@ class EmbeddingService:
 
         return chunks_with_embeddings
 
-    # TODO: Do we summarize the documents or chunks here?
     async def generate_summary_documents(
         self, documents: List[BaseDocumentChunk]
     ) -> List[BaseDocumentChunk]:
-        pbar = tqdm(total=len(documents), desc="Summarizing documents")
+        pbar = tqdm(total=len(documents), desc="Grouping chunks")
         pages = {}
         for document in documents:
             page_number = document.metadata.get("page_number", None)
             if page_number not in pages:
-                doc = copy.deepcopy(document)
-                doc.content = await completion(document=doc)
-                pages[page_number] = doc
+                pages[page_number] = copy.deepcopy(document)
             else:
                 pages[page_number].content += document.content
             pbar.update()
         pbar.close()
-        summary_documents = list(pages.values())
+
+        # Limit to 10 concurrent jobs
+        sem = asyncio.Semaphore(10)
+
+        async def safe_completion(document: BaseDocumentChunk) -> BaseDocumentChunk:
+            async with sem:
+                try:
+                    document.content = await completion(document=document)
+                    pbar.update()
+                    return document
+                except Exception as e:
+                    logger.error(f"Error summarizing document {document.id}: {e}")
+                    return None
+
+        pbar = tqdm(total=len(pages), desc="Summarizing documents")
+        tasks = [safe_completion(document) for document in pages.values()]
+        summary_documents = await asyncio.gather(*tasks, return_exceptions=False)
+        pbar.close()
+
         return summary_documents
 
 
@@ -216,6 +235,7 @@ def get_encoder(*, encoder_config: Encoder) -> BaseEncoder:
         EncoderEnum.cohere: CohereEncoder,
         EncoderEnum.openai: OpenAIEncoder,
         EncoderEnum.huggingface: HuggingFaceEncoder,
+        EncoderEnum.fastembed: FastEmbedEncoder,
     }
     encoder_provider = encoder_config.type
     encoder = encoder_config.name

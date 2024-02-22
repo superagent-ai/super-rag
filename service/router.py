@@ -34,7 +34,7 @@ def create_route_layer() -> RouteLayer:
 async def get_documents(
     *, vector_service: BaseVectorDatabase, payload: RequestPayload
 ) -> list[BaseDocumentChunk]:
-    chunks = await vector_service.query(input=payload.input, top_k=25)
+    chunks = await vector_service.query(input=payload.input, top_k=5)
 
     if not len(chunks):
         logger.error(f"No documents found for query: {payload.input}")

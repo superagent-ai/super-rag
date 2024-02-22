@@ -17,4 +17,4 @@ RUN poetry install --no-root && rm -rf $POETRY_CACHE_DIR
 ENV PORT="8080"
 
 # Run main.py when the container launches
-CMD exec gunicorn --bind :$PORT --workers 2 --timeout 0  --worker-class uvicorn.workers.UvicornWorker  --threads 8 main:app
+RUN gunicorn --bind :$PORT --workers 2 --timeout 0  --worker-class uvicorn.workers.UvicornWorker  --threads 8 main:app

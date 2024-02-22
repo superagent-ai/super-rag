@@ -159,7 +159,7 @@ class EmbeddingService:
         async def safe_generate_embedding(
             chunk: BaseDocumentChunk,
         ) -> BaseDocumentChunk | None:
-            async with sem:  # Use the semaphore
+            async with sem:
                 try:
                     return await generate_embedding(chunk)
                 except Exception as e:
@@ -173,8 +173,6 @@ class EmbeddingService:
                 embeddings: List[np.ndarray] = [
                     np.array(e) for e in encoder([chunk.content])
                 ]
-
-                logger.info(f"Embedding: {chunk.id}, metadata: {chunk.metadata}")
                 chunk.dense_embedding = embeddings[0].tolist()
                 pbar.update()
                 return chunk
@@ -197,23 +195,38 @@ class EmbeddingService:
 
         return chunks_with_embeddings
 
-    # TODO: Do we summarize the documents or chunks here?
     async def generate_summary_documents(
         self, documents: List[BaseDocumentChunk]
     ) -> List[BaseDocumentChunk]:
-        pbar = tqdm(total=len(documents), desc="Summarizing documents")
+        pbar = tqdm(total=len(documents), desc="Grouping chunks")
         pages = {}
         for document in documents:
             page_number = document.metadata.get("page_number", None)
             if page_number not in pages:
-                doc = copy.deepcopy(document)
-                doc.content = await completion(document=doc)
-                pages[page_number] = doc
+                pages[page_number] = copy.deepcopy(document)
             else:
                 pages[page_number].content += document.content
             pbar.update()
         pbar.close()
-        summary_documents = list(pages.values())
+
+        # Limit to 10 concurrent jobs
+        sem = asyncio.Semaphore(10)
+
+        async def safe_completion(document: BaseDocumentChunk) -> BaseDocumentChunk:
+            async with sem:
+                try:
+                    document.content = await completion(document=document)
+                    pbar.update()
+                    return document
+                except Exception as e:
+                    logger.error(f"Error summarizing document {document.id}: {e}")
+                    return None
+
+        pbar = tqdm(total=len(pages), desc="Summarizing documents")
+        tasks = [safe_completion(document) for document in pages.values()]
+        summary_documents = await asyncio.gather(*tasks, return_exceptions=False)
+        pbar.close()
+
         return summary_documents
 
 

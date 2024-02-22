@@ -1,6 +1,7 @@
 import asyncio
 import copy
 import uuid
+import mimetypes
 from tempfile import NamedTemporaryFile
 from typing import Any, List, Optional
 
@@ -39,7 +40,7 @@ class EmbeddingService:
         self.vector_credentials = vector_credentials
         self.dimensions = dimensions
 
-    def _get_datasource_suffix(self, type: str) -> str:
+    def _get_datasource_suffix(self, type: str) -> dict:
         suffixes = {
             "TXT": ".txt",
             "PDF": ".pdf",
@@ -53,6 +54,15 @@ class EmbeddingService:
         except KeyError:
             raise ValueError("Unsupported datasource type")
 
+    def _get_strategy(self, type: str) -> dict:
+        strategies = {
+            "PDF": "auto",
+        }
+        try:
+            return strategies[type]
+        except KeyError:
+            return None
+
     async def _download_and_extract_elements(
         self, file, strategy: Optional[str] = "hi_res"
     ) -> List[Element]:
@@ -65,15 +75,19 @@ class EmbeddingService:
             f"using `{strategy}` strategy"
         )
         suffix = self._get_datasource_suffix(file.type.value)
+        strategy = self._get_strategy(type=file.type.value)
         with NamedTemporaryFile(suffix=suffix, delete=True) as temp_file:
             with requests.get(url=file.url) as response:
+                print(response)
                 temp_file.write(response.content)
                 temp_file.flush()
+            content_type = mimetypes.guess_type(temp_file.name)[0]
+            print(content_type)
             elements = partition(
                 file=temp_file,
                 include_page_breaks=True,
                 strategy=strategy,
-                skip_infer_table_types=["pdf"],
+                content_type=content_type,
             )
         return elements
 

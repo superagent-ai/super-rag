@@ -1,5 +1,5 @@
 # Use an official Python runtime as a parent image
-FROM python:3.11
+FROM python:3.11 AS builder
 
 # Set the working directory in the container
 WORKDIR /usr/src/app
@@ -8,11 +8,19 @@ WORKDIR /usr/src/app
 COPY . /usr/src/app
 
 # Install Poetry
-RUN pip install --no-cache-dir poetry
+RUN pip install poetry
 
-# Use Poetry to install dependencies
-RUN poetry config virtualenvs.create false \
-  && poetry install --no-interaction --no-ansi
+ENV POETRY_NO_INTERACTION=1 \
+    POETRY_VIRTUALENVS_IN_PROJECT=1 \
+    POETRY_VIRTUALENVS_CREATE=1 \
+    POETRY_CACHE_DIR=/tmp/poetry_cache \
+    MAX_CONCURRENCY=20
+
+# Copy only dependency files for layer caching
+COPY pyproject.toml poetry.lock ./
+
+# Install the required packages of the application into .venv
+RUN poetry install --no-root && rm -rf $POETRY_CACHE_DIR
 
 # Make port 80 available to the world outside this container
 ENV PORT="8080"

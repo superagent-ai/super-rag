@@ -13,11 +13,8 @@ COPY pyproject.toml poetry.lock ./
 # Install the required packages of the application
 RUN poetry install --no-root && rm -rf $POETRY_CACHE_DIR
 
-# Install gunicorn
-RUN pip install gunicorn
-
 # Make port 80 available to the world outside this container
 ENV PORT="8080"
 
 # Run main.py when the container launches
-RUN gunicorn --bind :$PORT --workers 2 --timeout 0  --worker-class uvicorn.workers.UvicornWorker  --threads 8 main:app
+CMD ["poetry", "run", "gunicorn", "--bind", ":8080", "--workers", "2", "--timeout", "0", "--worker-class", "uvicorn.workers.UvicornWorker", "--threads", "8", "main:app"]

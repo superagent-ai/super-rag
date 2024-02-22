@@ -1,4 +1,5 @@
 import asyncio
+import aiohttp
 import copy
 import uuid
 from tempfile import NamedTemporaryFile
@@ -11,6 +12,7 @@ from semantic_router.encoders import (
     CohereEncoder,
     HuggingFaceEncoder,
     OpenAIEncoder,
+    FastEmbedEncoder,
 )
 from tqdm import tqdm
 from unstructured.chunking.title import chunk_by_title
@@ -69,7 +71,10 @@ class EmbeddingService:
                 temp_file.write(response.content)
                 temp_file.flush()
             elements = partition(
-                file=temp_file, include_page_breaks=True, strategy=strategy
+                file=temp_file,
+                include_page_breaks=True,
+                strategy=strategy,
+                skip_infer_table_types=["pdf"],
             )
         return elements
 
@@ -107,7 +112,7 @@ class EmbeddingService:
                 if not document:
                     continue
                 chunks = chunk_by_title(
-                    elements, max_characters=500, combine_text_under_n_chars=0
+                    elements, max_characters=1500, new_after_n_chars=1000
                 )
                 for chunk in chunks:
                     # Ensure all metadata values are of a type acceptable
@@ -150,15 +155,17 @@ class EmbeddingService:
         index_name: Optional[str] = None,
     ) -> List[BaseDocumentChunk]:
         pbar = tqdm(total=len(documents), desc="Generating embeddings")
+        sem = asyncio.Semaphore(10)  # Limit to 10 concurrent tasks
 
         async def safe_generate_embedding(
             chunk: BaseDocumentChunk,
         ) -> BaseDocumentChunk | None:
-            try:
-                return await generate_embedding(chunk)
-            except Exception as e:
-                logger.error(f"Error embedding document {chunk.id}: {e}")
-                return None
+            async with sem:  # Use the semaphore
+                try:
+                    return await generate_embedding(chunk)
+                except Exception as e:
+                    logger.error(f"Error embedding document {chunk.id}: {e}")
+                    return None
 
         async def generate_embedding(
             chunk: BaseDocumentChunk,
@@ -216,6 +223,7 @@ def get_encoder(*, encoder_config: Encoder) -> BaseEncoder:
         EncoderEnum.cohere: CohereEncoder,
         EncoderEnum.openai: OpenAIEncoder,
         EncoderEnum.huggingface: HuggingFaceEncoder,
+        EncoderEnum.fastembed: FastEmbedEncoder,
     }
     encoder_provider = encoder_config.type
     encoder = encoder_config.name

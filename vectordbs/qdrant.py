@@ -8,6 +8,8 @@ from tqdm import tqdm
 from models.document import BaseDocumentChunk
 from vectordbs.base import BaseVectorDatabase
 
+MAX_QUERY_TOP_K = 5
+
 
 class QdrantService(BaseVectorDatabase):
     def __init__(
@@ -66,7 +68,7 @@ class QdrantService(BaseVectorDatabase):
 
         self.client.upsert(collection_name=self.index_name, wait=True, points=points)
 
-    async def query(self, input: str, top_k: int) -> List:
+    async def query(self, input: str, top_k: int = MAX_QUERY_TOP_K) -> List:
         vectors = await self._generate_vectors(input=input)
         search_result = self.client.search(
             collection_name=self.index_name,

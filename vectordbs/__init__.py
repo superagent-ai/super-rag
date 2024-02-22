@@ -19,7 +19,7 @@ def get_vector_service(
     index_name: str,
     credentials: VectorDatabase,
     encoder: BaseEncoder = OpenAIEncoder(),
-    dimensions: Optional[int] = None,
+    dimensions: Optional[int] = 384,
 ) -> BaseVectorDatabase:
     services = {
         "pinecone": PineconeService,

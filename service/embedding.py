@@ -10,7 +10,6 @@ import requests
 from semantic_router.encoders import (
     BaseEncoder,
     CohereEncoder,
-    HuggingFaceEncoder,
     OpenAIEncoder,
 )
 from tqdm import tqdm
@@ -247,7 +246,6 @@ def get_encoder(*, encoder_config: Encoder) -> BaseEncoder:
     encoder_mapping = {
         EncoderEnum.cohere: CohereEncoder,
         EncoderEnum.openai: OpenAIEncoder,
-        EncoderEnum.huggingface: HuggingFaceEncoder,
     }
     encoder_provider = encoder_config.type
     encoder = encoder_config.name

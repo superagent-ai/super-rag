@@ -13,6 +13,9 @@ COPY pyproject.toml poetry.lock ./
 # Install the required packages of the application
 RUN poetry install --no-root && rm -rf $POETRY_CACHE_DIR
 
+# Install gunicorn
+RUN pip install gunicorn
+
 # Make port 80 available to the world outside this container
 ENV PORT="8080"
 

@@ -10,8 +10,6 @@ from models.vector_database import VectorDatabase
 class EncoderEnum(str, Enum):
     cohere = "cohere"
     openai = "openai"
-    huggingface = "huggingface"
-    fastembed = "fastembed"
 
 
 class Encoder(BaseModel):

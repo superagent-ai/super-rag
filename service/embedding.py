@@ -1,21 +1,21 @@
 import asyncio
 import copy
 import uuid
-import mimetypes
 from tempfile import NamedTemporaryFile
 from typing import Any, List, Optional
 
 import numpy as np
 import requests
+from decouple import config
 from semantic_router.encoders import (
     BaseEncoder,
     CohereEncoder,
     OpenAIEncoder,
 )
 from tqdm import tqdm
-from unstructured.chunking.title import chunk_by_title
-from unstructured.documents.elements import Element
-from unstructured.partition.auto import partition
+from unstructured_client import UnstructuredClient
+from unstructured_client.models import shared
+from unstructured_client.models.errors import SDKError
 
 from models.document import BaseDocument, BaseDocumentChunk
 from models.file import File
@@ -37,6 +37,10 @@ class EmbeddingService:
         self.index_name = index_name
         self.vector_credentials = vector_credentials
         self.dimensions = dimensions
+        self.unstructured_client = UnstructuredClient(
+            api_key_auth=config("UNSTRUCTURED_IO_API_KEY"),
+            server_url=config("UNSTRUCTURED_IO_SERVER_URL"),
+        )
 
     def _get_datasource_suffix(self, type: str) -> dict:
         suffixes = {
@@ -63,38 +67,48 @@ class EmbeddingService:
 
     async def _download_and_extract_elements(
         self, file, strategy: Optional[str] = "hi_res"
-    ) -> List[Element]:
+    ) -> List[Any]:
         """
         Downloads the file and extracts elements using the partition function.
         Returns a list of unstructured elements.
         """
         logger.info(
-            f"Downloading and extracting elements from {file.url}, "
+            f"Downloading and extracting elements from {file.url},"
             f"using `{strategy}` strategy"
         )
         suffix = self._get_datasource_suffix(file.type.value)
         strategy = self._get_strategy(type=file.type.value)
         with NamedTemporaryFile(suffix=suffix, delete=True) as temp_file:
             with requests.get(url=file.url) as response:
-                print(response)
                 temp_file.write(response.content)
                 temp_file.flush()
-            content_type = mimetypes.guess_type(temp_file.name)[0]
-            print(content_type)
-            elements = partition(
-                file=temp_file,
+                temp_file.seek(0)  # Reset file pointer to the beginning
+                file_content = temp_file.read()
+                file_name = temp_file.name
+            files = shared.Files(
+                content=file_content,
+                file_name=file_name,
+            )
+            req = shared.PartitionParameters(
+                files=files,
                 include_page_breaks=True,
                 strategy=strategy,
-                content_type=content_type,
+                max_characters=1500,
+                new_after_n_chars=1000,
+                chunking_strategy="by_title",
             )
-        return elements
+            try:
+                unstructured_response = self.unstructured_client.general.partition(req)
+            except SDKError as e:
+                print(e)
+        return unstructured_response.elements or []
 
     async def generate_document(
         self, file: File, elements: List[Any]
     ) -> BaseDocument | None:
         logger.info(f"Generating document from {file.url}")
         try:
-            doc_content = "".join(element.text for element in elements)
+            doc_content = "".join(element.get("text") for element in elements)
             if not doc_content:
                 logger.error(f"Cannot extract text from {file.url}")
                 return None
@@ -118,13 +132,10 @@ class EmbeddingService:
         doc_chunks = []
         for file in tqdm(self.files, desc="Generating chunks"):
             try:
-                elements = await self._download_and_extract_elements(file, strategy)
-                document = await self.generate_document(file, elements)
+                chunks = await self._download_and_extract_elements(file, strategy)
+                document = await self.generate_document(file, chunks)
                 if not document:
                     continue
-                chunks = chunk_by_title(
-                    elements, max_characters=1500, new_after_n_chars=1000
-                )
                 for chunk in chunks:
                     # Ensure all metadata values are of a type acceptable
                     sanitized_metadata = {
@@ -133,14 +144,15 @@ class EmbeddingService:
                             if isinstance(value, (str, int, float, bool, list))
                             else str(value)
                         )
-                        for key, value in chunk.metadata.to_dict().items()
+                        for key, value in chunk.get("metadata").items()
                     }
                     chunk_id = str(uuid.uuid4())  # must be a valid UUID
+                    chunk_text = chunk.get("text")
                     doc_chunks.append(
                         BaseDocumentChunk(
                             id=chunk_id,
                             document_id=document.id,
-                            content=chunk.text,
+                            content=chunk_text,
                             doc_url=file.url,
                             metadata={
                                 "chunk_id": chunk_id,
@@ -150,7 +162,7 @@ class EmbeddingService:
                                 "document_type": self._get_datasource_suffix(
                                     file.type.value
                                 ),
-                                "content": chunk.text,
+                                "content": chunk_text,
                                 **sanitized_metadata,
                             },
                         )

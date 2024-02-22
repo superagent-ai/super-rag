@@ -10,7 +10,6 @@ import requests
 from semantic_router.encoders import (
     BaseEncoder,
     CohereEncoder,
-    FastEmbedEncoder,
     HuggingFaceEncoder,
     OpenAIEncoder,
 )
@@ -249,7 +248,6 @@ def get_encoder(*, encoder_config: Encoder) -> BaseEncoder:
         EncoderEnum.cohere: CohereEncoder,
         EncoderEnum.openai: OpenAIEncoder,
         EncoderEnum.huggingface: HuggingFaceEncoder,
-        EncoderEnum.fastembed: FastEmbedEncoder,
     }
     encoder_provider = encoder_config.type
     encoder = encoder_config.name

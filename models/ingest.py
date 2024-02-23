@@ -5,6 +5,7 @@ from pydantic import BaseModel
 
 from models.file import File
 from models.vector_database import VectorDatabase
+from models.google_drive import GoogleDrive
 
 
 class EncoderEnum(str, Enum):
@@ -19,7 +20,8 @@ class Encoder(BaseModel):
 
 
 class RequestPayload(BaseModel):
-    files: List[File]
+    files: Optional[List[File]] = None
+    google_drive: Optional[GoogleDrive] = None
     encoder: Encoder
     vector_database: VectorDatabase
     index_name: str

@@ -19,21 +19,25 @@ from unstructured_client.models.errors import SDKError
 
 from models.document import BaseDocument, BaseDocumentChunk
 from models.file import File
+from models.google_drive import GoogleDrive
 from models.ingest import Encoder, EncoderEnum
 from utils.logger import logger
 from utils.summarise import completion
+from utils.file import get_file_extension_from_url
 from vectordbs import get_vector_service
 
 
 class EmbeddingService:
     def __init__(
         self,
-        files: List[File],
         index_name: str,
         vector_credentials: dict,
         dimensions: Optional[int],
+        files: Optional[List[File]] = None,
+        google_drive: Optional[GoogleDrive] = None,
     ):
         self.files = files
+        self.google_drive = google_drive
         self.index_name = index_name
         self.vector_credentials = vector_credentials
         self.dimensions = dimensions
@@ -41,20 +45,6 @@ class EmbeddingService:
             api_key_auth=config("UNSTRUCTURED_IO_API_KEY"),
             server_url=config("UNSTRUCTURED_IO_SERVER_URL"),
         )
-
-    def _get_datasource_suffix(self, type: str) -> dict:
-        suffixes = {
-            "TXT": ".txt",
-            "PDF": ".pdf",
-            "MARKDOWN": ".md",
-            "DOCX": ".docx",
-            "CSV": ".csv",
-            "XLSX": ".xlsx",
-        }
-        try:
-            return suffixes[type]
-        except KeyError:
-            raise ValueError("Unsupported datasource type")
 
     def _get_strategy(self, type: str) -> dict:
         strategies = {
@@ -66,7 +56,7 @@ class EmbeddingService:
             return None
 
     async def _download_and_extract_elements(
-        self, file, strategy: Optional[str] = "hi_res"
+        self, file: File, strategy: Optional[str] = "hi_res"
     ) -> List[Any]:
         """
         Downloads the file and extracts elements using the partition function.
@@ -76,7 +66,7 @@ class EmbeddingService:
             f"Downloading and extracting elements from {file.url},"
             f"using `{strategy}` strategy"
         )
-        suffix = self._get_datasource_suffix(file.type.value)
+        suffix = get_file_extension_from_url(url=file.url)
         strategy = self._get_strategy(type=file.type.value)
         with NamedTemporaryFile(suffix=suffix, delete=True) as temp_file:
             with requests.get(url=file.url) as response:
@@ -115,7 +105,7 @@ class EmbeddingService:
             doc_metadata = {
                 "source": file.url,
                 "source_type": "document",
-                "document_type": self._get_datasource_suffix(file.type.value),
+                "document_type": get_file_extension_from_url(url=file.url),
             }
             return BaseDocument(
                 id=f"doc_{uuid.uuid4()}",
@@ -159,9 +149,7 @@ class EmbeddingService:
                                 "document_id": document.id,
                                 "source": file.url,
                                 "source_type": "document",
-                                "document_type": self._get_datasource_suffix(
-                                    file.type.value
-                                ),
+                                "document_type": get_file_extension_from_url(file.url),
                                 "content": chunk_text,
                                 **sanitized_metadata,
                             },

@@ -1,6 +1,5 @@
 from enum import Enum
-from urllib.parse import urlparse
-from urllib.parse import unquote
+from urllib.parse import unquote, urlparse
 
 from pydantic import BaseModel, validator
 
@@ -36,7 +35,7 @@ class File(BaseModel):
     type: FileType | None = None
 
     @validator("type", pre=True, always=True)
-    def set_type_from_url(cls, v, values):
+    def set_type_from_url(cls, v, values):  # noqa: F841
         if v is not None:
             return v
         url = values.get("url")

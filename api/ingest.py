@@ -26,6 +26,10 @@ async def ingest(payload: RequestPayload) -> Dict:
         chunks, summary_documents = await handle_google_drive(
             embedding_service, payload.google_drive
         )
+    elif payload.aws_s3:
+        chunks, summary_documents = await handle_google_drive(
+            embedding_service, payload.aws_s3
+        )
 
     await asyncio.gather(
         embedding_service.generate_and_upsert_embeddings(

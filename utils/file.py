@@ -2,6 +2,7 @@ from urllib.parse import urlparse
 import os
 
 
+# TODO: Can be removed
 def get_file_extension_from_url(url: str) -> str:
     """
     Extracts the file extension from a given URL.

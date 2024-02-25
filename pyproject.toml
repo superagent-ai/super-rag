@@ -19,7 +19,7 @@ black = "^23.12.1"
 flake8 = "^7.0.0"
 vulture = "^2.11"
 python-decouple = "^3.8"
-semantic-router = {version = "^0.0.22"}
+semantic-router = {version = "^0.0.24"}
 astrapy = "^0.7.4"
 openai = "^1.12.0"
 tqdm = "^4.66.2"
@@ -32,6 +32,7 @@ e2b = "^0.14.4"
 gunicorn = "^21.2.0"
 unstructured-client = "^0.18.0"
 unstructured = {extras = ["google-drive"], version = "^0.12.4"}
+tiktoken = "^0.6.0"
 
 [tool.poetry.group.dev.dependencies]
 termcolor = "^2.4.0"

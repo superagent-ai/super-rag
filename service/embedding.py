@@ -2,10 +2,11 @@ import asyncio
 import copy
 import uuid
 from tempfile import NamedTemporaryFile
-from typing import Any, List, Optional
+from typing import Any, List, Literal, Optional
 
 import numpy as np
 import requests
+import tiktoken
 from decouple import config
 from semantic_router.encoders import (
     BaseEncoder,
@@ -21,9 +22,9 @@ from models.document import BaseDocument, BaseDocumentChunk
 from models.file import File
 from models.google_drive import GoogleDrive
 from models.ingest import Encoder, EncoderEnum
+from service.splitter import UnstructuredSemanticSplitter
 from utils.logger import logger
 from utils.summarise import completion
-from utils.file import get_file_extension_from_url
 from vectordbs import get_vector_service
 
 
@@ -31,11 +32,13 @@ class EmbeddingService:
     def __init__(
         self,
         index_name: str,
+        encoder: BaseEncoder,
         vector_credentials: dict,
         dimensions: Optional[int],
         files: Optional[List[File]] = None,
         google_drive: Optional[GoogleDrive] = None,
     ):
+        self.encoder = encoder
         self.files = files
         self.google_drive = google_drive
         self.index_name = index_name
@@ -46,7 +49,7 @@ class EmbeddingService:
             server_url=config("UNSTRUCTURED_IO_SERVER_URL"),
         )
 
-    def _get_strategy(self, type: str) -> dict:
+    def _get_strategy(self, type: str) -> Optional[str]:
         strategies = {
             "PDF": "auto",
         }
@@ -55,142 +58,213 @@ class EmbeddingService:
         except KeyError:
             return None
 
-    async def _download_and_extract_elements(
-        self, file: File, strategy: Optional[str] = "hi_res"
+    async def _partition_file(
+        self,
+        file: File,
+        strategy="auto",
+        returned_elements_type: Literal["chunked", "original"] = "chunked",
     ) -> List[Any]:
         """
         Downloads the file and extracts elements using the partition function.
         Returns a list of unstructured elements.
         """
+        # TODO: This will overwrite the function parameter?
+        # if file.type is None:
+        #     raise ValueError(f"File type not set for {file.url}")
+        # strategy = self._get_strategy(type=file.type.value)
+
+        # TODO: Do we need this if we have default value in the function signature?
+        # if strategy is None:
+        #     strategy = "auto"
+
         logger.info(
             f"Downloading and extracting elements from {file.url},"
             f"using `{strategy}` strategy"
         )
-        suffix = get_file_extension_from_url(url=file.url)
-        strategy = self._get_strategy(type=file.type.value)
-        with NamedTemporaryFile(suffix=suffix, delete=True) as temp_file:
+        with NamedTemporaryFile(suffix=file.suffix, delete=True) as temp_file:
             with requests.get(url=file.url) as response:
                 temp_file.write(response.content)
                 temp_file.flush()
                 temp_file.seek(0)  # Reset file pointer to the beginning
                 file_content = temp_file.read()
                 file_name = temp_file.name
+
             files = shared.Files(
                 content=file_content,
                 file_name=file_name,
             )
-            req = shared.PartitionParameters(
-                files=files,
-                include_page_breaks=True,
-                strategy=strategy,
-                max_characters=1500,
-                new_after_n_chars=1000,
-                chunking_strategy="by_title",
-            )
+            if returned_elements_type == "original":
+                req = shared.PartitionParameters(
+                    files=files,
+                    include_page_breaks=True,
+                    strategy=strategy,
+                )
+            else:
+                req = shared.PartitionParameters(
+                    files=files,
+                    include_page_breaks=True,
+                    strategy=strategy,
+                    max_characters=2500,
+                    new_after_n_chars=1000,
+                    chunking_strategy="by_title",
+                )
             try:
                 unstructured_response = self.unstructured_client.general.partition(req)
+                if unstructured_response.elements is not None:
+                    return unstructured_response.elements
+                else:
+                    logger.error(
+                        f"Error partitioning file {file.url}: {unstructured_response}"
+                    )
+                    return []
             except SDKError as e:
-                print(e)
-        return unstructured_response.elements or []
+                logger.error(f"Error partitioning file {file.url}: {e}")
+                return []
 
-    async def generate_document(
-        self, file: File, elements: List[Any]
-    ) -> BaseDocument | None:
-        logger.info(f"Generating document from {file.url}")
-        try:
-            doc_content = "".join(element.get("text") for element in elements)
-            if not doc_content:
-                logger.error(f"Cannot extract text from {file.url}")
-                return None
-            doc_metadata = {
-                "source": file.url,
-                "source_type": "document",
-                "document_type": get_file_extension_from_url(url=file.url),
-            }
-            return BaseDocument(
-                id=f"doc_{uuid.uuid4()}",
-                content=doc_content,
-                doc_url=file.url,
-                metadata=doc_metadata,
-            )
-        except Exception as e:
-            logger.error(f"Error loading document {file.url}: {e}")
+    def _tiktoken_length(self, text: str):
+        tokenizer = tiktoken.get_encoding("cl100k_base")
+        tokens = tokenizer.encode(text, disallowed_special=())
+        return len(tokens)
+
+    def _sanitize_metadata(self, metadata: dict) -> dict:
+        def sanitize_value(value):
+            if isinstance(value, (str, int, float, bool)):
+                return value
+            elif isinstance(value, list):
+                # Ensure all elements in the list are of type str, int, float, or bool
+                # Convert non-compliant elements to str
+                sanitized_list = []
+                for v in value:
+                    if isinstance(v, (str, int, float, bool)):
+                        sanitized_list.append(v)
+                    elif isinstance(v, (dict, list)):
+                        # For nested structures, convert to a string representation
+                        sanitized_list.append(str(v))
+                    else:
+                        sanitized_list.append(str(v))
+                return sanitized_list
+            elif isinstance(value, dict):
+                return {k: sanitize_value(v) for k, v in value.items()}
+            else:
+                return str(value)
+
+        return {key: sanitize_value(value) for key, value in metadata.items()}
 
     async def generate_chunks(
-        self, strategy: Optional[str] = "auto"
+        self,
+        partition_strategy: Literal["auto", "hi_res"] = "auto",
+        split_method: Literal["by_title", "semantic"] = "by_title",
+        min_chunk_tokens: int = 50,
+        max_token_size: int = 300,
+        rolling_window_size: int = 1,  # Compares each element with the previous one
     ) -> List[BaseDocumentChunk]:
         doc_chunks = []
         for file in tqdm(self.files, desc="Generating chunks"):
             try:
-                chunks = await self._download_and_extract_elements(file, strategy)
-                document = await self.generate_document(file, chunks)
-                if not document:
-                    continue
-                for chunk in chunks:
-                    # Ensure all metadata values are of a type acceptable
-                    sanitized_metadata = {
-                        key: (
-                            value
-                            if isinstance(value, (str, int, float, bool, list))
-                            else str(value)
-                        )
-                        for key, value in chunk.get("metadata").items()
-                    }
-                    chunk_id = str(uuid.uuid4())  # must be a valid UUID
-                    chunk_text = chunk.get("text")
-                    doc_chunks.append(
-                        BaseDocumentChunk(
-                            id=chunk_id,
-                            document_id=document.id,
-                            content=chunk_text,
-                            doc_url=file.url,
-                            metadata={
-                                "chunk_id": chunk_id,
-                                "document_id": document.id,
-                                "source": file.url,
-                                "source_type": "document",
-                                "document_type": get_file_extension_from_url(file.url),
-                                "content": chunk_text,
-                                **sanitized_metadata,
-                            },
-                        )
+                chunks = []
+                if split_method == "by_title":
+                    chunked_elements = await self._partition_file(
+                        file, strategy=partition_strategy
                     )
+                    # TODO: handle chunked_elements being None
+                    for element in chunked_elements:
+                        chunk_data = {
+                            "content": element.get("text"),
+                            "metadata": self._sanitize_metadata(
+                                element.get("metadata")
+                            ),
+                        }
+                        chunks.append(chunk_data)
+
+                if split_method == "semantic":
+                    elements = await self._partition_file(
+                        file,
+                        strategy=partition_strategy,
+                        returned_elements_type="original",
+                    )
+                    splitter = UnstructuredSemanticSplitter(
+                        encoder=self.encoder,
+                        window_size=rolling_window_size,
+                        min_split_tokens=min_chunk_tokens,
+                        max_split_tokens=max_token_size,
+                    )
+                    chunks = await splitter(elements=elements)
+
+                if not chunks:
+                    continue
+
+                doc_content = " ".join(
+                    [str(chunk.get("content", "")) for chunk in chunks]
+                )
+                document = BaseDocument(
+                    id=f"doc_{uuid.uuid4()}",
+                    content=doc_content,
+                    doc_url=file.url,
+                    metadata={
+                        "source": file.url,
+                        "source_type": "document",
+                        "document_type": file.suffix,
+                    },
+                )
+
+                for chunk in chunks:
+                    chunk_id = str(uuid.uuid4())
+                    doc_chunk = BaseDocumentChunk(
+                        id=chunk_id,
+                        doc_url=file.url,
+                        document_id=document.id,
+                        content=chunk.get("content", ""),
+                        source=file.url,
+                        source_type=file.suffix,
+                        chunk_index=chunk.get("chunk_index", None),
+                        title=chunk.get("title", None),
+                        token_count=self._tiktoken_length(chunk.get("content", "")),
+                        metadata=self._sanitize_metadata(chunk.get("metadata", {})),
+                    )
+                    doc_chunks.append(doc_chunk)
             except Exception as e:
                 logger.error(f"Error loading chunks from {file.url}: {e}")
+                raise
         return doc_chunks
 
-    async def generate_and_upsert_embeddings(
+    async def embed_and_upsert(
         self,
-        documents: List[BaseDocumentChunk],
+        chunks: List[BaseDocumentChunk],
         encoder: BaseEncoder,
         index_name: Optional[str] = None,
+        batch_size: int = 100,
     ) -> List[BaseDocumentChunk]:
-        pbar = tqdm(total=len(documents), desc="Generating embeddings")
+        pbar = tqdm(total=len(chunks), desc="Generating embeddings")
         sem = asyncio.Semaphore(10)  # Limit to 10 concurrent tasks
 
-        async def safe_generate_embedding(
-            chunk: BaseDocumentChunk,
-        ) -> BaseDocumentChunk | None:
+        async def embed_batch(
+            chunks_batch: List[BaseDocumentChunk],
+        ) -> List[BaseDocumentChunk]:
             async with sem:
                 try:
-                    return await generate_embedding(chunk)
+                    texts = [chunk.content for chunk in chunks_batch]
+                    embeddings = encoder(texts)
+                    for chunk, embedding in zip(chunks_batch, embeddings):
+                        chunk.dense_embedding = np.array(embedding).tolist()
+                    return chunks_batch
                 except Exception as e:
-                    logger.error(f"Error embedding document {chunk.id}: {e}")
-                    return None
+                    logger.error(f"Error embedding a batch of documents: {e}")
+                    raise
 
-        async def generate_embedding(
-            chunk: BaseDocumentChunk,
-        ) -> BaseDocumentChunk | None:
-            if chunk is not None:
-                embeddings: List[np.ndarray] = [
-                    np.array(e) for e in encoder([chunk.content])
-                ]
-                chunk.dense_embedding = embeddings[0].tolist()
-                pbar.update()
-                return chunk
+        # Create batches of chunks
+        chunks_batches = [
+            chunks[i : i + batch_size] for i in range(0, len(chunks), batch_size)
+        ]
 
-        tasks = [safe_generate_embedding(document) for document in documents]
-        chunks_with_embeddings = await asyncio.gather(*tasks, return_exceptions=False)
+        # Process each batch
+        tasks = [embed_batch(batch) for batch in chunks_batches]
+        chunks_with_embeddings = await asyncio.gather(*tasks)
+        chunks_with_embeddings = [
+            chunk
+            for batch in chunks_with_embeddings
+            for chunk in batch
+            if chunk is not None
+        ]
         pbar.close()
 
         vector_service = get_vector_service(
@@ -203,7 +277,7 @@ class EmbeddingService:
             await vector_service.upsert(chunks=chunks_with_embeddings)
         except Exception as e:
             logger.error(f"Error upserting embeddings: {e}")
-            raise Exception(f"Error upserting embeddings: {e}")
+            raise
 
         return chunks_with_embeddings
 
@@ -247,7 +321,8 @@ def get_encoder(*, encoder_config: Encoder) -> BaseEncoder:
         EncoderEnum.cohere: CohereEncoder,
         EncoderEnum.openai: OpenAIEncoder,
     }
-    encoder_provider = encoder_config.type
+    encoder_provider = encoder_config.provider
+
     encoder = encoder_config.name
     encoder_class = encoder_mapping.get(encoder_provider)
     if encoder_class is None:

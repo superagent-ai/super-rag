@@ -21,7 +21,7 @@ from unstructured_client.models.errors import SDKError
 from models.document import BaseDocument, BaseDocumentChunk
 from models.file import File
 from models.google_drive import GoogleDrive
-from models.ingest import Encoder, EncoderEnum
+from models.ingest import ChunkConfig, Encoder, EncoderEnum
 from service.splitter import UnstructuredSemanticSplitter
 from utils.logger import logger
 from utils.summarise import completion
@@ -156,19 +156,15 @@ class EmbeddingService:
 
     async def generate_chunks(
         self,
-        partition_strategy: Literal["auto", "hi_res"] = "auto",
-        split_method: Literal["by_title", "semantic"] = "by_title",
-        min_chunk_tokens: int = 50,
-        max_token_size: int = 300,
-        rolling_window_size: int = 1,  # Compares each element with the previous one
+        config: ChunkConfig,
     ) -> List[BaseDocumentChunk]:
         doc_chunks = []
         for file in tqdm(self.files, desc="Generating chunks"):
             try:
                 chunks = []
-                if split_method == "by_title":
+                if config.split_method == "by_title":
                     chunked_elements = await self._partition_file(
-                        file, strategy=partition_strategy
+                        file, strategy=config.partition_strategy
                     )
                     # TODO: handle chunked_elements being None
                     for element in chunked_elements:
@@ -180,17 +176,17 @@ class EmbeddingService:
                         }
                         chunks.append(chunk_data)
 
-                if split_method == "semantic":
+                if config.split_method == "semantic":
                     elements = await self._partition_file(
                         file,
-                        strategy=partition_strategy,
+                        strategy=config.partition_strategy,
                         returned_elements_type="original",
                     )
                     splitter = UnstructuredSemanticSplitter(
                         encoder=self.encoder,
-                        window_size=rolling_window_size,
-                        min_split_tokens=min_chunk_tokens,
-                        max_split_tokens=max_token_size,
+                        window_size=config.rolling_window_size,
+                        min_split_tokens=config.min_chunk_tokens,
+                        max_split_tokens=config.max_token_size,
                     )
                     chunks = await splitter(elements=elements)
 
@@ -213,11 +209,14 @@ class EmbeddingService:
 
                 for chunk in chunks:
                     chunk_id = str(uuid.uuid4())
+                    chunk_with_title = (
+                        f"{chunk.get('title', '')}\n{chunk.get('content', '')}"
+                    )
                     doc_chunk = BaseDocumentChunk(
                         id=chunk_id,
                         doc_url=file.url,
                         document_id=document.id,
-                        content=chunk.get("content", ""),
+                        content=chunk_with_title,
                         source=file.url,
                         source_type=file.suffix,
                         chunk_index=chunk.get("chunk_index", None),

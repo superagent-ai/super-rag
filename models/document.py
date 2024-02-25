@@ -39,11 +39,33 @@ class BaseDocumentChunk(BaseModel):
             "token_count",
             "page_number",
         }
-        filtered_metadata = {k: v for k, v in metadata.items() if k not in exclude_keys}
+        # Prepare metadata for the constructor and for embedding into the object
+        constructor_metadata = {
+            k: v for k, v in metadata.items() if k not in exclude_keys
+        }
+        filtered_metadata = {
+            k: v for k, v in metadata.items() if k in exclude_keys and k != "chunk_id"
+        }
+
+        def to_int(value):
+            try:
+                return int(value) if str(value).isdigit() else None
+            except (TypeError, ValueError):
+                return None
+
+        chunk_index = to_int(metadata.get("chunk_index"))
+        token_count = to_int(metadata.get("token_count"))
+
+        # Remove explicitly passed keys from filtered_metadata to avoid duplication
+        for key in ["chunk_index", "token_count"]:
+            filtered_metadata.pop(key, None)
+
         return cls(
             id=metadata.get("chunk_id", ""),
-            **metadata,
-            metadata=filtered_metadata,
+            chunk_index=chunk_index,
+            token_count=token_count,
+            **filtered_metadata,  # Pass filtered metadata for constructor
+            metadata=constructor_metadata,  # Pass the rest as part of the metadata
             dense_embedding=metadata.get("values"),
         )
 

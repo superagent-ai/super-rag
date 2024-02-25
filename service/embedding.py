@@ -27,6 +27,10 @@ from utils.logger import logger
 from utils.summarise import completion
 from vectordbs import get_vector_service
 
+# TODO: Add similarity score to the BaseDocumentChunk
+# TODO: Add relevance score to the BaseDocumentChunk
+# TODO: Add created_at date to the BaseDocumentChunk
+
 
 class EmbeddingService:
     def __init__(

@@ -3332,13 +3332,13 @@ files = [
 
 [[package]]
 name = "semantic-router"
-version = "0.0.25"
+version = "0.0.26"
 description = "Super fast semantic router for AI decision making"
 optional = false
 python-versions = ">=3.9,<3.13"
 files = [
-    {file = "semantic_router-0.0.25-py3-none-any.whl", hash = "sha256:52f2cded85d10c6f1250aaa99a113c96d237897dbfbcf9d414e7766cae95d414"},
-    {file = "semantic_router-0.0.25.tar.gz", hash = "sha256:064f1ceb2f2214c92c7fafca3a695cd75e636fa7b78abca03cd3b30a9ad9dda1"},
+    {file = "semantic_router-0.0.26-py3-none-any.whl", hash = "sha256:edc3664c913867f7cd8006226af6240fb9b2bface58cdf6eee13a57f5bd058cf"},
+    {file = "semantic_router-0.0.26.tar.gz", hash = "sha256:c4c37e6542b28f487baec4f02a5388239dc4f61238b033d2a01a169c6811d1a3"},
 ]
 
 [package.dependencies]
@@ -4258,4 +4258,4 @@ testing = ["big-O", "jaraco.functools", "jaraco.itertools", "more-itertools", "p
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.9,<3.12"
-content-hash = "e82ac8cdeb677dad85d6be23d1815d2db89f3513ea5199906f113867758f8a91"
+content-hash = "ca9bfb9fb29878b192128f32b196abecb6b56f0a97fa56cbee4e1ac31791bfe2"

@@ -1,8 +1,8 @@
 from typing import List, Optional
 
 from pydantic import BaseModel
-from models.document import BaseDocumentChunk
 
+from models.document import BaseDocumentChunk
 from models.ingest import Encoder
 from models.vector_database import VectorDatabase
 

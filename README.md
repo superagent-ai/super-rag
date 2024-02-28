@@ -11,7 +11,7 @@ Input example:
 {
     "files": [
         {
-            "type": "PDF",
+            "name": "My file",
             "url": "https://path-to-my-file.pdf"
         }
     ],
@@ -23,8 +23,15 @@ Input example:
         }
     },
     "index_name": "my_index",
+    "chunk_config": {
+        "partition_strategy": "auto",
+        "split_method": "semantic",
+        "min_chunk_tokens": 400,
+        "max_token_size": 30,
+        "rolling_window_size": 1
+    },
     "encoder": {
-        "type": "openai",
+        "provider": "openai",
         "name": "text-embedding-3-small",
         "dimensions": 1536  # encoder depends on the provider and model
     },
@@ -47,8 +54,9 @@ Input example:
     },
     "index_name": "my_index",
     "encoder": {
-        "type": "openai",
+        "provider": "openai",
         "name": "text-embedding-3-small",
+        "dimensions": 384
     }
     "session_id": "my_session_id" # keeps micro-vm sessions and enables caching 
 }

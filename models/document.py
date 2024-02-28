@@ -13,11 +13,11 @@ class BaseDocument(BaseModel):
 
 class BaseDocumentChunk(BaseModel):
     id: str
-    doc_url: str
+    doc_url: str | None = None
     document_id: str
     content: str
-    source: str
-    source_type: str
+    source: str | None = None
+    source_type: str | None = None
     chunk_index: int | None = None
     title: str | None = None
     token_count: int | None = None

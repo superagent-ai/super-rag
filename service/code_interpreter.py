@@ -1,14 +1,14 @@
-import re
 import asyncio
 import logging
-import time
+import re
 import textwrap
+import time
 from typing import List
-from decouple import config
-from openai import AsyncOpenAI
-import pandas as pd
 
+import pandas as pd
+from decouple import config
 from e2b import Sandbox
+from openai import AsyncOpenAI
 
 logging.getLogger("e2b").setLevel(logging.INFO)
 

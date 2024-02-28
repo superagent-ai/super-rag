@@ -5,7 +5,6 @@ from semantic_router.route import Route
 
 from models.document import BaseDocumentChunk
 from models.query import RequestPayload
-
 from service.code_interpreter import CodeInterpreterService
 from service.embedding import get_encoder
 from utils.logger import logger
@@ -49,6 +48,7 @@ async def get_documents(
         async with code_interpreter as service:
             response = await service.run_python(code=code)
             output = response.stdout
+            print(output)
 
     reranked_chunks = await vector_service.rerank(query=payload.input, documents=chunks)
     return reranked_chunks

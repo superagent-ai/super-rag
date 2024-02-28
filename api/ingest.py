@@ -6,7 +6,7 @@ from fastapi import APIRouter
 
 from models.ingest import RequestPayload
 from service.embedding import EmbeddingService, get_encoder
-from service.ingest import handle_urls, handle_google_drive
+from service.ingest import handle_google_drive, handle_urls
 from utils.summarise import SUMMARY_SUFFIX
 
 router = APIRouter()

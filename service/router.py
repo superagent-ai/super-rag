@@ -6,11 +6,13 @@ from semantic_router.route import Route
 from models.document import BaseDocumentChunk
 from models.query import RequestPayload
 
-# from service.code_interpreter import CodeInterpreterService
+from service.code_interpreter import CodeInterpreterService
 from service.embedding import get_encoder
 from utils.logger import logger
 from utils.summarise import SUMMARY_SUFFIX
 from vectordbs import BaseVectorDatabase, get_vector_service
+
+STRUTURED_DATA = [".xlsx", ".csv", ".json"]
 
 
 def create_route_layer() -> RouteLayer:
@@ -35,10 +37,18 @@ async def get_documents(
     *, vector_service: BaseVectorDatabase, payload: RequestPayload
 ) -> list[BaseDocumentChunk]:
     chunks = await vector_service.query(input=payload.input, top_k=5)
-
     if not len(chunks):
         logger.error(f"No documents found for query: {payload.input}")
         return []
+    is_structured = chunks[0].metadata.get("document_type") in STRUTURED_DATA
+    if is_structured and payload.interpreter_mode:
+        code_interpreter = CodeInterpreterService(
+            session_id=payload.session_id, file_urls=[chunks[0].metadata.get("doc_url")]
+        )
+        code = await code_interpreter.generate_code(query=payload.input)
+        async with code_interpreter as service:
+            response = await service.run_python(code=code)
+            output = response.stdout
 
     reranked_chunks = await vector_service.rerank(query=payload.input, documents=chunks)
     return reranked_chunks
@@ -62,16 +72,5 @@ async def query(payload: RequestPayload) -> list[BaseDocumentChunk]:
         credentials=payload.vector_database,
         encoder=encoder,
     )
-
-    # async with CodeInterpreterService(
-    #     session_id=payload.session_id,
-    #     file_urls=[
-    #         "https://raw.githubusercontent.com/datasciencedojo/datasets/master/titanic.csv"
-    #     ],
-    # ) as service:
-    #     code = "df0.info()"
-    #     output = await service.run_python(code=code)
-    #     print(output.stderr)
-    #     print(output.stdout)
 
     return await get_documents(vector_service=vector_service, payload=payload)

@@ -1,11 +1,20 @@
+import re
 import asyncio
 import logging
 import time
+import textwrap
 from typing import List
+from decouple import config
+from openai import AsyncOpenAI
+import pandas as pd
 
 from e2b import Sandbox
 
 logging.getLogger("e2b").setLevel(logging.INFO)
+
+client = AsyncOpenAI(
+    api_key=config("OPENAI_API_KEY"),
+)
 
 
 class CodeInterpreterService:
@@ -73,36 +82,65 @@ class CodeInterpreterService:
             self.sandbox.keep_alive(self.timeout)
         self.sandbox.close()
 
-    def get_files_code(self):
+    def get_dataframe(self):
         """
         Get the code to read the files in the sandbox.
         This can be used for instructing the LLM how to access the loaded files.
         """
-
         # TODO: Add support for xslx, json
-        files_code = "\n".join(
-            f'df{i} = pd.read_csv("{self._get_file_path(url)}") # {url}'
-            for i, url in enumerate(self.file_urls)
+        df = pd.read_csv(self.file_urls[0])
+        return df, self.file_urls[0]
+
+    def genreate_prompt(self, query: str) -> str:
+        df, url = self.get_dataframe()
+        return textwrap.dedent(
+            f"""
+        You are provided with a following pandas dataframe (`df`):
+        {df.info()}
+
+        Using the provided dataframe (`df`), update the following python code using pandas that returns the answer to question: \"{query}\"
+        
+        This is the initial python code to be updated:
+        
+        ```python
+        import pandas as pd
+
+        df = pd.read_csv("{url}") 
+        1. Process: Manipulating data for analysis (grouping, filtering, aggregating, etc.)
+        2. Analyze: Conducting the actual analysis
+        3. Output: Returning the answer as a string
+        ```
+        """
         )
 
-        return f"""
-import pandas as pd
+    def extract_code(self, code: str) -> str:
+        pattern = r"```(?:python)?(.*?)```"
+        matches = re.findall(pattern, code, re.DOTALL)
+        if matches:
+            return matches[0].strip()
+        return ""
 
-{files_code}
-
-"""
+    async def generate_code(
+        self,
+        query: str,
+    ) -> str:
+        content = self.genreate_prompt(query=query)
+        completion = await client.chat.completions.create(
+            messages=[
+                {
+                    "role": "user",
+                    "content": content,
+                }
+            ],
+            model="gpt-3.5-turbo-0125",
+        )
+        output = completion.choices[0].message.content
+        return self.extract_code(code=output)
 
     async def run_python(self, code: str):
-        files_code = self.get_files_code()
-
-        templated_code = f"""
-{files_code}
-{code}
-"""
-
         epoch_time = time.time()
         codefile_path = f"/tmp/main-{epoch_time}.py"
-        self.sandbox.filesystem.write(codefile_path, templated_code)
+        self.sandbox.filesystem.write(codefile_path, code)
         process = await asyncio.to_thread(
             self.sandbox.process.start_and_wait,
             f"python {codefile_path}",

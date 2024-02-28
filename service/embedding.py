@@ -159,7 +159,7 @@ class EmbeddingService:
         doc_chunks = []
         for file in tqdm(self.files, desc="Generating chunks"):
             try:
-                content = []
+                chunks = []
                 if config.splitter.name == "by_title":
                     chunked_elements = await self._partition_file(
                         file, strategy=config.unstructured.partition_strategy
@@ -172,7 +172,7 @@ class EmbeddingService:
                                 element.get("metadata")
                             ),
                         }
-                        content.append(chunk_data)
+                        chunks.append(chunk_data)
 
                 if config.splitter.name == "semantic":
                     elements = await self._partition_file(
@@ -186,27 +186,17 @@ class EmbeddingService:
                         min_split_tokens=config.splitter.min_tokens,
                         max_split_tokens=config.splitter.max_tokens,
                     )
-                    content = await splitter_config(elements=elements)
+                    chunks = await splitter_config(elements=elements)
 
-                if not content:
+                if not chunks:
                     continue
 
-                doc_content = " ".join(
-                    [str(chunk.get("content", "")) for chunk in content]
-                )
-                document = BaseDocument(
-                    id=f"doc_{uuid.uuid4()}",
-                    content=doc_content,
-                    doc_url=file.url,
-                    metadata={
-                        "source": file.url,
-                        "source_type": "document",
-                        "document_type": file.suffix,
-                    },
-                )
-
-                for chunk in content:
+                document_id = f"doc_{uuid.uuid4()}"
+                document_content = ""
+                for chunk in chunks:
+                    document_content += chunk.get("content", "")
                     chunk_id = str(uuid.uuid4())
+
                     if config.splitter.prefix_title:
                         content = (
                             f"{chunk.get('title', '')}\n{chunk.get('content', '')}"
@@ -216,7 +206,7 @@ class EmbeddingService:
                     doc_chunk = BaseDocumentChunk(
                         id=chunk_id,
                         doc_url=file.url,
-                        document_id=document.id,
+                        document_id=document_id,
                         content=content,
                         source=file.url,
                         source_type=file.suffix,
@@ -226,6 +216,19 @@ class EmbeddingService:
                         metadata=self._sanitize_metadata(chunk.get("metadata", {})),
                     )
                     doc_chunks.append(doc_chunk)
+
+                # This object will be used for evaluation purposes
+                BaseDocument(
+                    id=document_id,
+                    content=document_content,
+                    doc_url=file.url,
+                    metadata={
+                        "source": file.url,
+                        "source_type": "document",
+                        "document_type": file.suffix,
+                    },
+                )
+
             except Exception as e:
                 logger.error(f"Error loading chunks from {file.url}: {e}")
                 raise

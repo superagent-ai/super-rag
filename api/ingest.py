@@ -5,7 +5,7 @@ import aiohttp
 from fastapi import APIRouter
 
 from models.ingest import RequestPayload
-from service.embedding import EmbeddingService, get_encoder
+from service.embedding import EmbeddingService
 from service.ingest import handle_google_drive, handle_urls
 from utils.summarise import SUMMARY_SUFFIX
 
@@ -14,18 +14,20 @@ router = APIRouter()
 
 @router.post("/ingest")
 async def ingest(payload: RequestPayload) -> Dict:
-    encoder = get_encoder(encoder_config=payload.encoder)
+    encoder = payload.document_processor.encoder.get_encoder()
     embedding_service = EmbeddingService(
         encoder=encoder,
         index_name=payload.index_name,
         vector_credentials=payload.vector_database,
-        dimensions=payload.encoder.dimensions,
+        dimensions=payload.document_processor.encoder.dimensions,
     )
     chunks = []
     summary_documents = []
     if payload.files:
         chunks, summary_documents = await handle_urls(
-            embedding_service, payload.files, payload.chunk_config
+            embedding_service=embedding_service,
+            files=payload.files,
+            config=payload.document_processor,
         )
 
     elif payload.google_drive:

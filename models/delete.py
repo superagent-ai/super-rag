@@ -1,6 +1,6 @@
 from pydantic import BaseModel
 
-from models.ingest import Encoder
+from models.ingest import EncoderConfig
 from models.vector_database import VectorDatabase
 
 
@@ -12,7 +12,7 @@ class RequestPayload(BaseModel):
     index_name: str
     files: list[File]
     vector_database: VectorDatabase
-    encoder: Encoder
+    encoder: EncoderConfig = EncoderConfig()
 
 
 class DeleteResponse(BaseModel):

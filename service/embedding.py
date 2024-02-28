@@ -10,8 +10,6 @@ import tiktoken
 from decouple import config
 from semantic_router.encoders import (
     BaseEncoder,
-    CohereEncoder,
-    OpenAIEncoder,
 )
 from tqdm import tqdm
 from unstructured_client import UnstructuredClient
@@ -21,7 +19,7 @@ from unstructured_client.models.errors import SDKError
 from models.document import BaseDocument, BaseDocumentChunk
 from models.file import File
 from models.google_drive import GoogleDrive
-from models.ingest import ChunkConfig, Encoder, EncoderEnum
+from models.ingest import DocumentProcessorConfig
 from service.splitter import UnstructuredSemanticSplitter
 from utils.logger import logger
 from utils.summarise import completion
@@ -156,15 +154,15 @@ class EmbeddingService:
 
     async def generate_chunks(
         self,
-        config: ChunkConfig,
+        config: DocumentProcessorConfig,
     ) -> List[BaseDocumentChunk]:
         doc_chunks = []
         for file in tqdm(self.files, desc="Generating chunks"):
             try:
-                chunks = []
-                if config.split_method == "by_title":
+                content = []
+                if config.splitter.name == "by_title":
                     chunked_elements = await self._partition_file(
-                        file, strategy=config.partition_strategy
+                        file, strategy=config.unstructured.partition_strategy
                     )
                     # TODO: handle chunked_elements being None
                     for element in chunked_elements:
@@ -174,27 +172,27 @@ class EmbeddingService:
                                 element.get("metadata")
                             ),
                         }
-                        chunks.append(chunk_data)
+                        content.append(chunk_data)
 
-                if config.split_method == "semantic":
+                if config.splitter.name == "semantic":
                     elements = await self._partition_file(
                         file,
-                        strategy=config.partition_strategy,
+                        strategy=config.unstructured.partition_strategy,
                         returned_elements_type="original",
                     )
-                    splitter = UnstructuredSemanticSplitter(
+                    splitter_config = UnstructuredSemanticSplitter(
                         encoder=self.encoder,
-                        window_size=config.rolling_window_size,
-                        min_split_tokens=config.min_chunk_tokens,
-                        max_split_tokens=config.max_token_size,
+                        window_size=config.splitter.rolling_window_size,
+                        min_split_tokens=config.splitter.min_tokens,
+                        max_split_tokens=config.splitter.max_tokens,
                     )
-                    chunks = await splitter(elements=elements)
+                    content = await splitter_config(elements=elements)
 
-                if not chunks:
+                if not content:
                     continue
 
                 doc_content = " ".join(
-                    [str(chunk.get("content", "")) for chunk in chunks]
+                    [str(chunk.get("content", "")) for chunk in content]
                 )
                 document = BaseDocument(
                     id=f"doc_{uuid.uuid4()}",
@@ -207,16 +205,19 @@ class EmbeddingService:
                     },
                 )
 
-                for chunk in chunks:
+                for chunk in content:
                     chunk_id = str(uuid.uuid4())
-                    chunk_with_title = (
-                        f"{chunk.get('title', '')}\n{chunk.get('content', '')}"
-                    )
+                    if config.splitter.prefix_title:
+                        content = (
+                            f"{chunk.get('title', '')}\n{chunk.get('content', '')}"
+                        )
+                    else:
+                        content = chunk.get("content", "")
                     doc_chunk = BaseDocumentChunk(
                         id=chunk_id,
                         doc_url=file.url,
                         document_id=document.id,
-                        content=chunk_with_title,
+                        content=content,
                         source=file.url,
                         source_type=file.suffix,
                         chunk_index=chunk.get("chunk_index", None),
@@ -317,17 +318,3 @@ class EmbeddingService:
         pbar.close()
 
         return summary_documents
-
-
-def get_encoder(*, encoder_config: Encoder) -> BaseEncoder:
-    encoder_mapping = {
-        EncoderEnum.cohere: CohereEncoder,
-        EncoderEnum.openai: OpenAIEncoder,
-    }
-    encoder_provider = encoder_config.provider
-
-    encoder = encoder_config.name
-    encoder_class = encoder_mapping.get(encoder_provider)
-    if encoder_class is None:
-        raise ValueError(f"Unsupported provider: {encoder_provider}")
-    return encoder_class(name=encoder)

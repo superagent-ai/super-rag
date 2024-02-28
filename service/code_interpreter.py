@@ -70,17 +70,24 @@ class CodeInterpreterService:
         self.sandbox = self._ensure_sandbox(session_id)
 
     async def __aenter__(self):
-        if not self._is_initialized:
-            self._is_initialized = True
-            for file_url in self.file_urls:
-                await self._upload_file(file_url)
-
+        try:
+            if not self._is_initialized:
+                self._is_initialized = True
+                for file_url in self.file_urls:
+                    await self._upload_file(file_url)
+        except:
+            self.self.sandbox.close()
+            raise
+        
         return self
 
     async def __aexit__(self, _exc_type, _exc_value, _traceback):
-        if self.session_id:
-            self.sandbox.keep_alive(self.timeout)
-        self.sandbox.close()
+        try:
+            if self.session_id:
+                self.sandbox.keep_alive(self.timeout)
+        finally:
+            self.sandbox.close()
+
 
     def get_dataframe(self):
         """

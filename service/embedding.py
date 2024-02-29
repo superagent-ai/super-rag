@@ -253,6 +253,7 @@ class EmbeddingService:
                     embeddings = encoder(texts)
                     for chunk, embedding in zip(chunks_batch, embeddings):
                         chunk.dense_embedding = np.array(embedding).tolist()
+                    pbar.update(len(chunks_batch))  # Update the progress bar
                     return chunks_batch
                 except Exception as e:
                     logger.error(f"Error embedding a batch of documents: {e}")

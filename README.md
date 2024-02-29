@@ -11,10 +11,30 @@ Input example:
 {
     "files": [
         {
-            "name": "My file",
+            "name": "My file", // Optional
             "url": "https://path-to-my-file.pdf"
         }
     ],
+    "document_processor": { // Optional
+        "encoder": {
+            "dimensions": 384,
+            "model_name": "embed-multilingual-light-v3.0",
+            "provider": "cohere"
+        },
+        "unstructured": {
+            "hi_res_model_name": "detectron2_onnx",
+            "partition_strategy": "auto",
+            "process_tables": false
+        },
+        "splitter": {
+            "max_tokens": 400,
+            "min_tokens": 30,
+            "name": "semantic",
+            "prefix_summary": true,
+            "prefix_title": true,
+            "rolling_window_size": 1
+        }
+    },
     "vector_database": {
         "type": "qdrant",
         "config": {
@@ -23,18 +43,6 @@ Input example:
         }
     },
     "index_name": "my_index",
-    "chunk_config": {
-        "partition_strategy": "auto",
-        "split_method": "semantic",
-        "min_chunk_tokens": 400,
-        "max_token_size": 30,
-        "rolling_window_size": 1
-    },
-    "encoder": {
-        "provider": "openai",
-        "name": "text-embedding-3-small",
-        "dimensions": 1536  # encoder depends on the provider and model
-    },
     "webhook_url": "https://my-webhook-url"
 }
 ```

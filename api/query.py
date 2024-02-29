@@ -10,4 +10,8 @@ router = APIRouter()
 async def query(payload: RequestPayload):
     chunks = await _query(payload=payload)
     # NOTE: Filter out fields before given to LLM
-    return ResponsePayload(success=True, data=chunks)
+    response_payload = ResponsePayload(success=True, data=chunks)
+    response_data = response_payload.model_dump(
+        exclude=set(payload.exclude_fields) if payload.exclude_fields else None
+    )
+    return response_data

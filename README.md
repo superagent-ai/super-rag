@@ -57,7 +57,8 @@ Input example:
         "provider": "openai",
         "name": "text-embedding-3-small",
         "dimensions": 384
-    }
+    },
+    "interpreter_mode": False, # Set to True if you wish to run computation Q&A with a code interpreter
     "session_id": "my_session_id" # keeps micro-vm sessions and enables caching 
 }
 ```

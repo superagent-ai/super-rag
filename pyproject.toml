@@ -28,7 +28,7 @@ cmake = "^3.28.1"
 pypdf = "^4.0.1"
 docx2txt = "^0.8"
 python-dotenv = "^1.0.1"
-e2b = "^0.14.4"
+e2b = "^0.14.7"
 gunicorn = "^21.2.0"
 unstructured-client = "^0.18.0"
 unstructured = {extras = ["google-drive"], version = "^0.12.4"}

@@ -16,6 +16,12 @@ class RequestPayload(BaseModel):
     interpreter_mode: Optional[bool] = False
 
 
+class ResponseData(BaseModel):
+    content: str
+    doc_url: str
+    page_number: Optional[int]
+
+
 class ResponsePayload(BaseModel):
     success: bool
     data: List[BaseDocumentChunk]

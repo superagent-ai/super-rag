@@ -131,7 +131,7 @@ class CodeInterpreterService:
         self,
         query: str,
     ) -> str:
-        content = self.genreate_prompt(query=query)
+        content = self.generate_prompt(query=query)
         completion = await client.chat.completions.create(
             messages=[
                 {

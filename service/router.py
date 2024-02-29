@@ -1,3 +1,5 @@
+import uuid
+
 from decouple import config
 from semantic_router.encoders import CohereEncoder
 from semantic_router.layer import RouteLayer
@@ -10,6 +12,7 @@ from service.embedding import get_encoder
 from utils.logger import logger
 from utils.summarise import SUMMARY_SUFFIX
 from vectordbs import BaseVectorDatabase, get_vector_service
+
 
 STRUTURED_DATA = [".xlsx", ".csv", ".json"]
 
@@ -40,6 +43,7 @@ async def get_documents(
         logger.error(f"No documents found for query: {payload.input}")
         return []
     is_structured = chunks[0].metadata.get("document_type") in STRUTURED_DATA
+    reranked_chunks = []
     if is_structured and payload.interpreter_mode:
         async with CodeInterpreterService(
             session_id=payload.session_id, file_urls=[chunks[0].metadata.get("doc_url")]
@@ -47,9 +51,17 @@ async def get_documents(
             code = await service.generate_code(query=payload.input)
             response = await service.run_python(code=code)
             output = response.stdout
-            print(output)
-
-    reranked_chunks = await vector_service.rerank(query=payload.input, documents=chunks)
+            reranked_chunks.append(
+                BaseDocumentChunk(
+                    id=uuid(),
+                    document_id=uuid(),
+                    content=output,
+                    doc_url=chunks[0].metadata.get("doc_url"),
+                )
+            )
+    reranked_chunks.append(
+        await vector_service.rerank(query=payload.input, documents=chunks)
+    )
     return reranked_chunks
 
 

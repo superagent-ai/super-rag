@@ -885,13 +885,13 @@ files = [
 
 [[package]]
 name = "e2b"
-version = "0.14.4"
+version = "0.14.7"
 description = "E2B SDK that give agents cloud environments"
 optional = false
 python-versions = ">=3.8,<4.0"
 files = [
-    {file = "e2b-0.14.4-py3-none-any.whl", hash = "sha256:70ca7f4a4696b2ad5f1785ffecd57906ce37506e834c29078f61563a7392962a"},
-    {file = "e2b-0.14.4.tar.gz", hash = "sha256:e838f478f5cfc82333459996a508f885551ceedfbaa0fad871a40062abc8296d"},
+    {file = "e2b-0.14.7-py3-none-any.whl", hash = "sha256:1a37d0f2c706fe5109e8895362d8850b9aac8bf321dbb8e2197fb07b8c74287e"},
+    {file = "e2b-0.14.7.tar.gz", hash = "sha256:ac74d66fa9d51a6fb10af8f080aa590aa5c7245f2ae70652f76f380f4dbaf2c6"},
 ]
 
 [package.dependencies]
@@ -2217,13 +2217,13 @@ files = [
 
 [[package]]
 name = "openai"
-version = "1.12.0"
+version = "1.13.3"
 description = "The official Python library for the openai API"
 optional = false
 python-versions = ">=3.7.1"
 files = [
-    {file = "openai-1.12.0-py3-none-any.whl", hash = "sha256:a54002c814e05222e413664f651b5916714e4700d041d5cf5724d3ae1a3e3481"},
-    {file = "openai-1.12.0.tar.gz", hash = "sha256:99c5d257d09ea6533d689d1cc77caa0ac679fa21efef8893d8b0832a86877f1b"},
+    {file = "openai-1.13.3-py3-none-any.whl", hash = "sha256:5769b62abd02f350a8dd1a3a242d8972c947860654466171d60fb0972ae0a41c"},
+    {file = "openai-1.13.3.tar.gz", hash = "sha256:ff6c6b3bc7327e715e4b3592a923a5a1c7519ff5dd764a83d69f633d49e77a7b"},
 ]
 
 [package.dependencies]
@@ -3740,13 +3740,13 @@ files = [
 
 [[package]]
 name = "unstructured"
-version = "0.12.4"
+version = "0.12.5"
 description = "A library that prepares raw documents for downstream ML tasks."
 optional = false
 python-versions = ">=3.9.0,<3.12"
 files = [
-    {file = "unstructured-0.12.4-py3-none-any.whl", hash = "sha256:f1aa046297a3afba3aa16895e513aca6a93802ef73b7a18080656435c4deb217"},
-    {file = "unstructured-0.12.4.tar.gz", hash = "sha256:019cf52e9e2bfa286e61ffa0d7d336e1645280f9a0f165e697583143fcfe708a"},
+    {file = "unstructured-0.12.5-py3-none-any.whl", hash = "sha256:cce7de36964f556810adb8728d0639d8e9b3ef4567443877609f3c66a54e24d1"},
+    {file = "unstructured-0.12.5.tar.gz", hash = "sha256:5ea6c881049e7d98a88c07192bcb6ab750de41b4e3b594972ed1034bda99dbae"},
 ]
 
 [package.dependencies]
@@ -3773,6 +3773,7 @@ wrapt = "*"
 [package.extras]
 airtable = ["pyairtable"]
 all-docs = ["markdown", "msg-parser", "networkx", "onnx", "openpyxl", "pandas", "pdf2image", "pdfminer.six", "pikepdf", "pillow-heif", "pypandoc", "pypdf", "python-docx", "python-pptx (<=0.6.23)", "unstructured-inference (==0.7.23)", "unstructured.pytesseract (>=0.3.12)", "xlrd"]
+astra = ["astrapy"]
 azure = ["adlfs", "fsspec"]
 azure-cognitive-search = ["azure-search-documents"]
 bedrock = ["boto3", "langchain-community"]
@@ -4253,4 +4254,4 @@ testing = ["big-O", "jaraco.functools", "jaraco.itertools", "more-itertools", "p
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.9,<3.12"
-content-hash = "ef6ccb56262679dfff8f47705c65fdd33086c1e5447c45fff577487ac4b504b3"
+content-hash = "9fab773e0bb1d4a412cdf10a47ff271056bd99f8b0e76a9309b377c732c50e63"

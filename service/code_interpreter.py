@@ -10,6 +10,8 @@ from decouple import config
 from e2b import Sandbox
 from openai import AsyncOpenAI
 
+from models.file import File, FileType
+
 logging.getLogger("e2b").setLevel(logging.INFO)
 
 client = AsyncOpenAI(
@@ -96,7 +98,13 @@ class CodeInterpreterService:
         This can be used for instructing the LLM how to access the loaded files.
         """
         # TODO: Add support for multiple dataframes
-        df = pd.read_csv(self.file_urls[0])
+        file = File(url=self.file_urls[0])
+        if file.type == FileType.csv:
+            df = pd.read_csv(self.file_urls[0])
+        elif file.type == FileType.json:
+            df = pd.read_json(self.files[0])
+        elif file.type == FileType.xlsx:
+            df = pd.read_excel(self.file_urls[0])
         return df, self.file_urls[0]
 
     def generate_prompt(self, query: str) -> str:

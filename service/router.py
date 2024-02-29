@@ -56,6 +56,7 @@ async def get_documents(
                     document_id=str(uuid4()),
                     content=output,
                     doc_url=chunks[0].metadata.get("doc_url"),
+                    metadata={"interpreter_mode": True},
                 )
             )
     reranked_chunks.extend(

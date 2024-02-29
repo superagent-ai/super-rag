@@ -19,6 +19,7 @@ class ResponseData(BaseModel):
     content: str
     doc_url: str
     page_number: Optional[int]
+    metadata: Optional[dict] = None
 
 
 class ResponsePayload(BaseModel):

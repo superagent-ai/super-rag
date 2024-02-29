@@ -98,7 +98,7 @@ class CodeInterpreterService:
         df = pd.read_csv(self.file_urls[0])
         return df, self.file_urls[0]
 
-    def genreate_prompt(self, query: str) -> str:
+    def generate_prompt(self, query: str) -> str:
         df, url = self.get_dataframe()
         return textwrap.dedent(
             f"""

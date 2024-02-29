@@ -94,7 +94,7 @@ class CodeInterpreterService:
         Get the code to read the files in the sandbox.
         This can be used for instructing the LLM how to access the loaded files.
         """
-        # TODO: Add support for xslx, json
+        # TODO: Add support for multiple dataframes
         df = pd.read_csv(self.file_urls[0])
         return df, self.file_urls[0]
 

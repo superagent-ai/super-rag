@@ -80,7 +80,7 @@ class CodeInterpreterService:
         except:
             self.self.sandbox.close()
             raise
-        
+
         return self
 
     async def __aexit__(self, _exc_type, _exc_value, _traceback):
@@ -89,7 +89,6 @@ class CodeInterpreterService:
                 self.sandbox.keep_alive(self.timeout)
         finally:
             self.sandbox.close()
-
 
     def get_dataframe(self):
         """

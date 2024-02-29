@@ -16,6 +16,8 @@ client = AsyncOpenAI(
     api_key=config("OPENAI_API_KEY"),
 )
 
+SYSTEM_PROMPT = "You are a world-class python programmer that can complete any data analysis tasks by coding."
+
 
 class CodeInterpreterService:
     timeout = 3 * 60  # 3 minutes
@@ -135,9 +137,13 @@ class CodeInterpreterService:
         completion = await client.chat.completions.create(
             messages=[
                 {
+                    "role": "system",
+                    "content": SYSTEM_PROMPT,
+                },
+                {
                     "role": "user",
                     "content": content,
-                }
+                },
             ],
             model="gpt-3.5-turbo-0125",
         )

@@ -1,4 +1,4 @@
-import uuid
+from uuid import uuid4
 
 from decouple import config
 from semantic_router.encoders import CohereEncoder
@@ -12,7 +12,6 @@ from service.embedding import get_encoder
 from utils.logger import logger
 from utils.summarise import SUMMARY_SUFFIX
 from vectordbs import BaseVectorDatabase, get_vector_service
-
 
 STRUTURED_DATA = [".xlsx", ".csv", ".json"]
 
@@ -53,13 +52,13 @@ async def get_documents(
             output = response.stdout
             reranked_chunks.append(
                 BaseDocumentChunk(
-                    id=uuid(),
-                    document_id=uuid(),
+                    id=str(uuid4()),
+                    document_id=str(uuid4()),
                     content=output,
                     doc_url=chunks[0].metadata.get("doc_url"),
                 )
             )
-    reranked_chunks.append(
+    reranked_chunks.extend(
         await vector_service.rerank(query=payload.input, documents=chunks)
     )
     return reranked_chunks

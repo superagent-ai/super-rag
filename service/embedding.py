@@ -21,9 +21,9 @@ from models.document import BaseDocument, BaseDocumentChunk
 from models.file import File
 from models.google_drive import GoogleDrive
 from models.ingest import Encoder, EncoderEnum
+from utils.file import get_file_extension_from_url
 from utils.logger import logger
 from utils.summarise import completion
-from utils.file import get_file_extension_from_url
 from vectordbs import get_vector_service
 
 

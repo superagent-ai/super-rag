@@ -12,6 +12,7 @@ class RequestPayload(BaseModel):
     index_name: str
     encoder: Encoder
     session_id: Optional[str] = None
+    interpreter_mode: Optional[bool] = False
 
 
 class ResponseData(BaseModel):

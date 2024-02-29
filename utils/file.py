@@ -1,5 +1,5 @@
-from urllib.parse import urlparse
 import os
+from urllib.parse import urlparse
 
 
 def get_file_extension_from_url(url: str) -> str:

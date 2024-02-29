@@ -41,11 +41,10 @@ async def get_documents(
         return []
     is_structured = chunks[0].metadata.get("document_type") in STRUTURED_DATA
     if is_structured and payload.interpreter_mode:
-        code_interpreter = CodeInterpreterService(
+        async with CodeInterpreterService(
             session_id=payload.session_id, file_urls=[chunks[0].metadata.get("doc_url")]
-        )
-        code = await code_interpreter.generate_code(query=payload.input)
-        async with code_interpreter as service:
+        ) as service:
+            code = await service.generate_code(query=payload.input)
             response = await service.run_python(code=code)
             output = response.stdout
             print(output)

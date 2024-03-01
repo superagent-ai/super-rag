@@ -14,18 +14,18 @@
 </div>
 
 
-## Key features
+## ✅ Key features
  - Supports multiple document formats and vector databases.
  - Provides a production ready REST API.
  - Includes options for encoding data using different encoding models both propriatory and open source.
  - Built in code interpreter mode for computational question & answer scenarios.
  - Allows session management through unique IDs for caching purposes.
 
-## Cloud API 
+## ☁️ Cloud API 
 
 Easiset way to get started is to use our [Cloud API](https://d3jvqvcd9u4534.cloudfront.net). This API is free to use (within reasonable limits).
 
-## Installation
+## 📦  Installation
 
 1. Clone the repository
     ```bash
@@ -56,7 +56,7 @@ Easiset way to get started is to use our [Cloud API](https://d3jvqvcd9u4534.clou
     uvicorn main:app --reload
     ```
 
-## How to use 
+## 🚀 How to use 
 Super-Rag comes with a built in REST API powered by FastApi. 
 
 ### Ingest documents
@@ -130,14 +130,14 @@ Super-Rag comes with a built in REST API powered by FastApi.
 
 ```
 
-## Supportd encoders
+## 🧠 Supportd encoders
 - OpenAi
 - Cohere
 - HuggingFace
 - FastEmbed
 
 
-## Supported vector databases
+## 🗃 Supported vector databases
 - Weaviate
 - Qdrant
 - Weaviate

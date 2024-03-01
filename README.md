@@ -17,6 +17,7 @@
 ## ✅ Key features
  - Supports multiple document formats and vector databases.
  - Provides a production ready REST API.
+ - Customizable splitting/chunking.
  - Includes options for encoding data using different encoding models both propriatory and open source.
  - Built in code interpreter mode for computational question & answer scenarios.
  - Allows session management through unique IDs for caching purposes.

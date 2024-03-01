@@ -58,7 +58,7 @@
 Super-Rag comes with a built in REST API powered by FastApi. 
 
 ### Ingest documents
-    ```json
+    ```
     // POST: /api/v1/ingest
 
     // Payload
@@ -84,7 +84,7 @@ Super-Rag comes with a built in REST API powered by FastApi.
     ```
 
 ### Query documents
-    ```json
+    ```
     // POST: /api/v1/query
 
     // Payload
@@ -110,7 +110,7 @@ Super-Rag comes with a built in REST API powered by FastApi.
     ```
 
 ### Delete document
-    ```json
+    ```
     // POST: /api/v1/delete
 
     // Payload

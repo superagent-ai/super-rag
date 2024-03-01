@@ -8,8 +8,8 @@
     <p align="center">
         <a href="#-key-features">Features</a> •
         <a href="#-installation">Installation</a> •
-        <a href="#-how-to-use">How to use</a>
-        <a href="#-docs">Docs</a>
+        <a href="#-how-to-use">How to use</a> •
+        <a href="#-cloud-api">Cloud API</a>
     </p>
 </div>
 
@@ -20,6 +20,10 @@
  - Includes options for encoding data using different encoding models both propriatory and open source.
  - Built in code interpreter mode for computational question & answer scenarios.
  - Allows session management through unique IDs for caching purposes.
+
+## Cloud API 
+
+Easiset way to get started is to use our [Cloud API](https://d3jvqvcd9u4534.cloudfront.net). This API is free to use (within reasonable limits).
 
 ## Installation
 

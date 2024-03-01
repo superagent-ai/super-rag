@@ -58,75 +58,75 @@
 Super-Rag comes with a built in REST API powered by FastApi. 
 
 ### Ingest documents
-    ```
-    // POST: /api/v1/ingest
+```json
+// POST: /api/v1/ingest
 
-    // Payload
-    {
-        "files": [{
-            "url": "https://arxiv.org/pdf/2210.03629.pdf"
-        }],
-        "vector_database": {
-            "type": "qdrant",
-            "config": {
-                "api_key": "YOUR API KEY",
-                "host": "THE QDRANT HOST"
-            }
-        },
-        "encoder": {
-            "type": "openai",
-            "name": "text-embedding-3-small",
-            "dimensions": 1536  // encoder depends on the provider and model
-        },
-        "index_name": "YOUR INDEX",
-        "webhook_url": "https://webhook.site/0e217d1c-49f1-424a-9992-497db09f7793"
-    }
-    ```
+// Payload
+{
+    "files": [{
+        "url": "https://arxiv.org/pdf/2210.03629.pdf"
+    }],
+    "vector_database": {
+        "type": "qdrant",
+        "config": {
+            "api_key": "YOUR API KEY",
+            "host": "THE QDRANT HOST"
+        }
+    },
+    "encoder": {
+        "type": "openai",
+        "name": "text-embedding-3-small",
+        "dimensions": 1536  // encoder depends on the provider and model
+    },
+    "index_name": "YOUR INDEX",
+    "webhook_url": "https://webhook.site/0e217d1c-49f1-424a-9992-497db09f7793"
+}
+```
 
 ### Query documents
-    ```
-    // POST: /api/v1/query
+```json
+// POST: /api/v1/query
 
-    // Payload
-    {
-        "input": "What is ReAct",
-        "vector_database": {
-                "type": "qdrant",
-                "config": {
-                "api_key": "YOUR API KEY",
-                "host": "THE QDRANT HOST"
-            }
-            },
-        "index_name": "YOUR INDEX",
-        "interpreter_mode": true,
-        "encoder": {
-            "type": "cohere",
-            "name": "embed-multilingual-light-v3.0",
-            "dimensions": 384
-        },
-        "exclude_fields": ["metadata"],
-        "session_id": "test"
-    }
-    ```
-
-### Delete document
-    ```
-    // POST: /api/v1/delete
-
-    // Payload
-    {
-        "file_url": "A file url to delete",
-        "vector_database": {
+// Payload
+{
+    "input": "What is ReAct",
+    "vector_database": {
             "type": "qdrant",
             "config": {
-                "api_key": "YOUR API KEY",
-                "host": "THE QDRANT HOST"
-            }
+            "api_key": "YOUR API KEY",
+            "host": "THE QDRANT HOST"
+        }
         },
-        "index_name": "my_index",
-    }
+    "index_name": "YOUR INDEX",
+    "interpreter_mode": true,
+    "encoder": {
+        "type": "cohere",
+        "name": "embed-multilingual-light-v3.0",
+        "dimensions": 384
+    },
+    "exclude_fields": ["metadata"],
+    "session_id": "test"
+}
+```
 
-    ```
+### Delete document
+```json
+// POST: /api/v1/delete
+
+// Payload
+{
+    "file_url": "A file url to delete",
+    "vector_database": {
+        "type": "qdrant",
+        "config": {
+            "api_key": "YOUR API KEY",
+            "host": "THE QDRANT HOST"
+        }
+    },
+    "index_name": "my_index",
+}
+
+```
 
 ## Supportd encoders
 - OpenAi

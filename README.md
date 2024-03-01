@@ -1,88 +1,143 @@
-# SuperRag
+<div align="center">
+	<img width="100px" src="https://github.com/homanp/superagent/assets/2464556/eb51fa38-4a2a-4c41-b348-d3c1abc04234" />
+	<h1>Super-Rag 🥷</h1>
+	<p>
+		<b>Super performant RAG pipeline for AI apps.</b>
+	</p>
+	<br>
+	<br>
+	<br>
+    <p align="center">
+        <a href="#-key-features">Features</a> •
+        <a href="#-installation">Installation</a> •
+        <a href="#-how-to-use">How to use</a>
+        <a href="#-docs">Docs</a>
+    </p>
+</div>
 
-Super-performant RAG pipeline for AI Agents/Assistants.
 
-## API
+## Key features
+ - Supports multiple document formats and vector databases.
+ - Provides a production ready REST API.
+ - Includes options for encoding data using different encoding models both propriatory and open source.
+ - Built in code interpreter mode for computational question & answer scenarios.
+ - Allows session management through unique IDs for caching purposes.
 
-### POST /api/v1/ingest
+## Installation
 
-Input example:
-```json
-{
-    "files": [
-        {
-            "type": "PDF",
-            "url": "https://path-to-my-file.pdf"
-        }
-    ],
-    "vector_database": {
-        "type": "qdrant",
-        "config": {
-            "api_key": "my_api_key",
-            "host": "my_qdrant_host"
-        }
-    },
-    "index_name": "my_index",
-    "encoder": {
-        "type": "openai",
-        "name": "text-embedding-3-small",
-        "dimensions": 1536  # encoder depends on the provider and model
-    },
-    "webhook_url": "https://my-webhook-url"
-}
-```
+1. Clone the repository
+    ```bash
+    git clone https://github.com/superagent-ai/super-rag 
+    cd super-rag 
+    ```
 
-### POST /api/v1/query
+2. Setup virtual environment
+    ```bash
+    # Using virtualenv 
+    virtualenv env 
+    source env/bin/activate 
+    
+    # Or using venv 
+    python3 -m venv env 
+    source env/bin/activate 
+    ```
 
-Input example:
-```json
-{
-    "input": "A query",
-    "vector_database": {
-        "type": "qdrant",
-        "config": {
-            "api_key": "my_api_key",
-            "host": "my_qdrant_host"
-        }
-    },
-    "index_name": "my_index",
-    "encoder": {
-        "type": "openai",
-        "name": "text-embedding-3-small",
-    },
-    "interpreter_mode": False, # Set to True if you wish to run computation Q&A with a code interpreter
-    "session_id": "my_session_id" # keeps micro-vm sessions and enables caching 
-}
-```
+3. Install requried packages
+    ```bash
+    poetry install
+    ```
 
-### DELETE /api/v1/delete
+4. Rename `.env.example` to `.env` and set your environment variables
 
-Input example:
-```json
-{
-    "file_url": "A file url to delete",
-    "vector_database": {
-        "type": "qdrant",
-        "config": {
-            "api_key": "my_api_key",
-            "host": "my_qdrant_host"
-        }
-    },
-    "index_name": "my_index",
-}
-```
+5. Run server
+    ```bash
+    uvicorn main:app --reload
+    ```
 
-## Supported file types
+## How to use 
+Super-Rag comes with a built in REST API powered by FastApi. 
 
-- PDF
-- TXT
-- MARKDOWN
-- PPTX
-- DOCX
+### Ingest documents
+    ```json
+    // POST: /api/v1/ingest
+
+    // Payload
+    {
+        "files": [{
+            "url": "https://arxiv.org/pdf/2210.03629.pdf"
+        }],
+        "vector_database": {
+            "type": "qdrant",
+            "config": {
+                "api_key": "YOUR API KEY",
+                "host": "THE QDRANT HOST"
+            }
+        },
+        "encoder": {
+            "type": "openai",
+            "name": "text-embedding-3-small",
+            "dimensions": 1536  // encoder depends on the provider and model
+        },
+        "index_name": "YOUR INDEX",
+        "webhook_url": "https://webhook.site/0e217d1c-49f1-424a-9992-497db09f7793"
+    }
+    ```
+
+### Query documents
+    ```json
+    // POST: /api/v1/query
+
+    // Payload
+    {
+        "input": "What is ReAct",
+        "vector_database": {
+                "type": "qdrant",
+                "config": {
+                "api_key": "YOUR API KEY",
+                "host": "THE QDRANT HOST"
+            }
+            },
+        "index_name": "YOUR INDEX",
+        "interpreter_mode": true,
+        "encoder": {
+            "type": "cohere",
+            "name": "embed-multilingual-light-v3.0",
+            "dimensions": 384
+        },
+        "exclude_fields": ["metadata"],
+        "session_id": "test"
+    }
+    ```
+
+### Delete document
+    ```json
+    // POST: /api/v1/delete
+
+    // Payload
+    {
+        "file_url": "A file url to delete",
+        "vector_database": {
+            "type": "qdrant",
+            "config": {
+                "api_key": "YOUR API KEY",
+                "host": "THE QDRANT HOST"
+            }
+        },
+        "index_name": "my_index",
+    }
+
+    ```
+
+## Supportd encoders
+- OpenAi
+- Cohere
+- HuggingFace
+- FastEmbed
+
 
 ## Supported vector databases
-
-- qdrant
-- pinecone
-- weaviate
-- astra
+- Weaviate
+- Qdrant
+- Weaviate
+- Astra
+- Supabase (coming soon)

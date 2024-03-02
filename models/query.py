@@ -2,7 +2,8 @@ from typing import List, Optional
 
 from pydantic import BaseModel
 
-from models.ingest import Encoder
+from models.document import BaseDocumentChunk
+from models.ingest import EncoderConfig
 from models.vector_database import VectorDatabase
 
 
@@ -10,9 +11,10 @@ class RequestPayload(BaseModel):
     input: str
     vector_database: VectorDatabase
     index_name: str
-    encoder: Encoder
+    encoder: EncoderConfig = EncoderConfig()
     session_id: Optional[str] = None
     interpreter_mode: Optional[bool] = False
+    exclude_fields: List[str] = None
 
 
 class ResponseData(BaseModel):
@@ -24,4 +26,10 @@ class ResponseData(BaseModel):
 
 class ResponsePayload(BaseModel):
     success: bool
-    data: List[ResponseData]
+    data: List[BaseDocumentChunk]
+
+    def model_dump(self, exclude: set = None):
+        return {
+            "success": self.success,
+            "data": [chunk.dict(exclude=exclude) for chunk in self.data],
+        }

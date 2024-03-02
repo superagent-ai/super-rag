@@ -80,6 +80,8 @@ class QdrantService(BaseVectorDatabase):
         return [
             BaseDocumentChunk(
                 id=result.id,
+                source_type=result.payload.get("filetype"),
+                source=result.payload.get("doc_url"),
                 document_id=result.payload.get("document_id"),
                 content=result.payload.get("content"),
                 doc_url=result.payload.get("doc_url"),

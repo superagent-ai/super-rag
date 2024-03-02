@@ -8,7 +8,6 @@ from semantic_router.route import Route
 from models.document import BaseDocumentChunk
 from models.query import RequestPayload
 from service.code_interpreter import CodeInterpreterService
-from service.embedding import get_encoder
 from utils.logger import logger
 from utils.summarise import SUMMARY_SUFFIX
 from vectordbs import BaseVectorDatabase, get_vector_service
@@ -68,7 +67,7 @@ async def get_documents(
 async def query(payload: RequestPayload) -> list[BaseDocumentChunk]:
     rl = create_route_layer()
     decision = rl(payload.input).name
-    encoder = get_encoder(encoder_config=payload.encoder)
+    encoder = payload.encoder.get_encoder()
 
     if decision == "summarize":
         vector_service: BaseVectorDatabase = get_vector_service(

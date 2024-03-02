@@ -1,7 +1,7 @@
 from enum import Enum
 from urllib.parse import unquote, urlparse
 
-from pydantic import BaseModel, validator
+from pydantic import BaseModel
 
 
 class FileType(Enum):
@@ -32,13 +32,11 @@ class FileType(Enum):
 
 class File(BaseModel):
     url: str
-    type: FileType | None = None
+    name: str | None = None
 
-    @validator("type", pre=True, always=True)
-    def set_type_from_url(cls, v, values):  # noqa: F841
-        if v is not None:
-            return v
-        url = values.get("url")
+    @property
+    def type(self) -> FileType | None:
+        url = self.url
         if url:
             parsed_url = urlparse(url)
             path = unquote(parsed_url.path)
@@ -47,4 +45,12 @@ class File(BaseModel):
                 return FileType[extension]
             except KeyError:
                 raise ValueError(f"Unsupported file type for URL: {url}")
-        return v
+        return None
+
+    @property
+    def suffix(self) -> str:
+        file_type = self.type
+        if file_type is not None:
+            return file_type.suffix()
+        else:
+            raise ValueError("File type is undefined, cannot determine suffix.")

@@ -66,9 +66,32 @@ Super-Rag comes with a built in REST API powered by FastApi.
 
 // Payload
 {
-    "files": [{
-        "url": "https://arxiv.org/pdf/2210.03629.pdf"
-    }],
+    "files": [
+        {
+            "name": "My file", // Optional
+            "url": "https://path-to-my-file.pdf"
+        }
+    ],
+    "document_processor": { // Optional
+        "encoder": {
+            "dimensions": 384,
+            "model_name": "embed-multilingual-light-v3.0",
+            "provider": "cohere"
+        },
+        "unstructured": {
+            "hi_res_model_name": "detectron2_onnx",
+            "partition_strategy": "auto",
+            "process_tables": false
+        },
+        "splitter": {
+            "max_tokens": 400,
+            "min_tokens": 30,
+            "name": "semantic",
+            "prefix_summary": true,
+            "prefix_title": true,
+            "rolling_window_size": 1
+        }
+    },
     "vector_database": {
         "type": "qdrant",
         "config": {
@@ -76,13 +99,8 @@ Super-Rag comes with a built in REST API powered by FastApi.
             "host": "THE QDRANT HOST"
         }
     },
-    "encoder": {
-        "type": "openai",
-        "name": "text-embedding-3-small",
-        "dimensions": 1536  // encoder depends on the provider and model
-    },
-    "index_name": "YOUR INDEX",
-    "webhook_url": "https://webhook.site/0e217d1c-49f1-424a-9992-497db09f7793"
+    "index_name": "my_index",
+    "webhook_url": "https://my-webhook-url"
 }
 ```
 
@@ -103,12 +121,13 @@ Super-Rag comes with a built in REST API powered by FastApi.
     "index_name": "YOUR INDEX",
     "interpreter_mode": true,
     "encoder": {
-        "type": "cohere",
-        "name": "embed-multilingual-light-v3.0",
+        "provider": "openai",
+        "name": "text-embedding-3-small",
         "dimensions": 384
     },
-    "exclude_fields": ["metadata"],
-    "session_id": "test"
+    "exclude_fields": ["metadata"], // Exclude specific fields
+    "interpreter_mode": False, // Set to True if you wish to run computation Q&A with a code interpreter
+    "session_id": "my_session_id" // keeps micro-vm sessions and enables caching 
 }
 ```
 

@@ -5,6 +5,7 @@ from qdrant_client.http import models as rest
 from semantic_router.encoders import BaseEncoder
 from tqdm import tqdm
 
+from models.delete import DeleteResponse
 from models.document import BaseDocumentChunk
 from vectordbs.base import BaseVectorDatabase
 
@@ -91,6 +92,28 @@ class QdrantService(BaseVectorDatabase):
         ]
 
     async def delete(self, file_url: str) -> None:
+        #         client.count(
+        #     collection_name="{collection_name}",
+        #     count_filter=models.Filter(
+        #         must=[
+        #             models.FieldCondition(key="color", match=models.MatchValue(value="red")),
+        #         ]
+        #     ),
+        #     exact=True,
+        # )
+
+        deleted_chunks = self.client.count(
+            collection_name=self.index_name,
+            count_filter=rest.Filter(
+                must=[
+                    rest.FieldCondition(
+                        key="file_url", match=rest.MatchValue(value=file_url)
+                    )
+                ]
+            ),
+            exact=True,
+        )
+
         self.client.delete(
             collection_name=self.index_name,
             points_selector=rest.FilterSelector(
@@ -103,3 +126,5 @@ class QdrantService(BaseVectorDatabase):
                 )
             ),
         )
+
+        return DeleteResponse(num_of_deleted_chunks=deleted_chunks.count)

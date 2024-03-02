@@ -90,7 +90,6 @@ class QdrantService(BaseVectorDatabase):
         ]
 
     async def delete(self, file_url: str) -> None:
-
         #         client.count(
         #     collection_name="{collection_name}",
         #     count_filter=models.Filter(

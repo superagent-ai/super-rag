@@ -2,7 +2,7 @@
 	<img width="100px" src="https://github.com/homanp/superagent/assets/2464556/eb51fa38-4a2a-4c41-b348-d3c1abc04234" />
 	<h1>Super-Rag</h1>
 	<p>
-		<b>Super performant RAG pipeline for AI apps.</b>
+		<b>Super-performant RAG pipeline for AI apps.</b>
 	</p>
 	<br>
     <p align="center">

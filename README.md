@@ -121,8 +121,8 @@ Super-Rag comes with a built in REST API powered by FastApi.
     "index_name": "YOUR INDEX",
     "interpreter_mode": true,
     "encoder": {
-        "provider": "openai",
-        "name": "text-embedding-3-small",
+        "provider": "cohere",
+        "name": "embed-multilingual-light-v3.0",
         "dimensions": 384
     },
     "exclude_fields": ["metadata"], // Exclude specific fields

@@ -97,37 +97,42 @@ class CodeInterpreterService:
         Get the code to read the files in the sandbox.
         This can be used for instructing the LLM how to access the loaded files.
         """
-        # TODO: Add support for multiple dataframes
-        file = File(url=self.file_urls[0])
-        if file.type == FileType.csv:
-            df = pd.read_csv(self.file_urls[0])
-        elif file.type == FileType.json:
-            df = pd.read_json(self.files[0])
-        elif file.type == FileType.xlsx:
-            df = pd.read_excel(self.file_urls[0])
-        return df, self.file_urls[0]
+        dataframes = {}
+        for file_url in self.file_urls:
+            file = File(url=file_url)
+            if file.type == FileType.csv:
+                df = pd.read_csv(file_url)
+            elif file.type == FileType.json:
+                df = pd.read_json(file_url)
+            elif file.type == FileType.xlsx:
+                df = pd.read_excel(file_url)
+            dataframes[file_url] = df
+        return dataframes
 
-    def generate_prompt(self, query: str) -> str:
-        df, url = self.get_dataframe()
-        return textwrap.dedent(
-            f"""
-        You are provided with a following pandas dataframe (`df`):
-        {df.info()}
+    def generate_prompt(self, query: str) -> list:
+        prompts = []
+        dataframes = self.get_dataframe()
+        for url, df in dataframes.items():
+            prompts.append(textwrap.dedent(
+                f"""
+                You are provided with a following pandas dataframe (`df`):
+                {df.info()}
 
-        Using the provided dataframe (`df`), update the following python code using pandas that returns the answer to question: \"{query}\"
-        
-        This is the initial python code to be updated:
-        
-        ```python
-        import pandas as pd
+                Using the provided dataframe (`df`), update the following python code using pandas that returns the answer to question: \"{query}\"
 
-        df = pd.read_csv("{url}") 
-        1. Process: Manipulating data for analysis (grouping, filtering, aggregating, etc.)
-        2. Analyze: Conducting the actual analysis
-        3. Output: Returning the answer as a string
-        ```
-        """
-        )
+                This is the initial python code to be updated:
+
+                ```python
+                import pandas as pd
+
+                df = pd.read_csv("{url}") 
+                1. Process: Manipulating data for analysis (grouping, filtering, aggregating, etc.)
+                2. Analyze: Conducting the actual analysis
+                3. Output: Returning the answer as a string
+                ```
+                """
+            ))
+        return prompts
 
     def extract_code(self, code: str) -> str:
         pattern = r"```(?:python)?(.*?)```"
@@ -139,23 +144,26 @@ class CodeInterpreterService:
     async def generate_code(
         self,
         query: str,
-    ) -> str:
-        content = self.generate_prompt(query=query)
-        completion = await client.chat.completions.create(
-            messages=[
-                {
-                    "role": "system",
-                    "content": SYSTEM_PROMPT,
-                },
-                {
-                    "role": "user",
-                    "content": content,
-                },
-            ],
-            model="gpt-3.5-turbo-0125",
-        )
-        output = completion.choices[0].message.content
-        return self.extract_code(code=output)
+    ) -> list:
+        extracted_code = []
+        generated_prompts = self.generate_prompt(query=query)
+        for content in generated_prompts:
+            completion = await client.chat.completions.create(
+                messages=[
+                    {
+                        "role": "system",
+                        "content": SYSTEM_PROMPT,
+                    },
+                    {
+                        "role": "user",
+                        "content": content,
+                    },
+                ],
+                model="gpt-3.5-turbo-0125",
+            )
+            output = completion.choices[0].message.content
+            extracted_code.append(self.extract_code(code=output))
+        return extracted_code
 
     async def run_python(self, code: str):
         epoch_time = time.time()

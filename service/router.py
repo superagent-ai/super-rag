@@ -46,18 +46,19 @@ async def get_documents(
         async with CodeInterpreterService(
             session_id=payload.session_id, file_urls=[chunks[0].metadata.get("doc_url")]
         ) as service:
-            code = await service.generate_code(query=payload.input)
-            response = await service.run_python(code=code)
-            output = response.stdout
-            reranked_chunks.append(
-                BaseDocumentChunk(
-                    id=str(uuid4()),
-                    document_id=str(uuid4()),
-                    content=output,
-                    doc_url=chunks[0].metadata.get("doc_url"),
-                    metadata={"interpreter_mode": True},
+            codes = await service.generate_code(query=payload.input)
+            for code in codes:
+                response = await service.run_python(code=code)
+                output = response.stdout
+                reranked_chunks.append(
+                    BaseDocumentChunk(
+                        id=str(uuid4()),
+                        document_id=str(uuid4()),
+                        content=output,
+                        doc_url=chunks[0].metadata.get("doc_url"),
+                        metadata={"interpreter_mode": True},
+                    )
                 )
-            )
     reranked_chunks.extend(
         await vector_service.rerank(query=payload.input, documents=chunks)
     )

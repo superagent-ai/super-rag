@@ -22,14 +22,13 @@ class PineconeService(BaseVectorDatabase):
         )
         pinecone = Pinecone(api_key=credentials["api_key"])
         if index_name not in [index.name for index in pinecone.list_indexes()]:
-            logger.info(
-                f"Creating new index {index_name}, dimension {dimension} in Pinecone"
-            )
             pinecone.create_index(
                 name=self.index_name,
                 dimension=dimension,
                 metric="dotproduct",
-                spec=ServerlessSpec(cloud="aws", region="us-west-2"),
+                spec=ServerlessSpec(
+                    cloud=credentials["cloud"], region=credentials["region"]
+                ),
             )
         self.index = pinecone.Index(name=self.index_name)
 
@@ -38,7 +37,6 @@ class PineconeService(BaseVectorDatabase):
         if self.index is None:
             raise ValueError(f"Pinecone index {self.index_name} is not initialized.")
         try:
-            logger.info(f"Upserting {len(chunks)} chunks into index {self.index_name}")
             # Prepare and upsert documents to Pinecone in batches
             for i in tqdm(range(0, len(chunks), batch_size)):
                 i_end = min(i + batch_size, len(chunks))

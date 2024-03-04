@@ -166,4 +166,8 @@ class CodeInterpreterService:
             f"python {codefile_path}",
         )
 
+        if process.messages:
+            line = process.messages[0].line
+            return line
+
         return process

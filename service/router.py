@@ -12,7 +12,11 @@ from utils.logger import logger
 from utils.summarise import SUMMARY_SUFFIX
 from vectordbs import BaseVectorDatabase, get_vector_service
 
-STRUTURED_DATA = [".xlsx", ".csv", ".json"]
+STRUCTURED_DATA = [
+    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    "text/csv",
+    "application/json",
+]
 
 
 def create_route_layer() -> RouteLayer:
@@ -40,15 +44,14 @@ async def get_documents(
     if not len(chunks):
         logger.error(f"No documents found for query: {payload.input}")
         return []
-    is_structured = chunks[0].metadata.get("document_type") in STRUTURED_DATA
+    is_structured = chunks[0].metadata.get("filetype") in STRUCTURED_DATA
     reranked_chunks = []
     if is_structured and payload.interpreter_mode:
         async with CodeInterpreterService(
             session_id=payload.session_id, file_urls=[chunks[0].metadata.get("doc_url")]
         ) as service:
             code = await service.generate_code(query=payload.input)
-            response = await service.run_python(code=code)
-            output = response.stdout
+            output = await service.run_python(code=code)
             reranked_chunks.append(
                 BaseDocumentChunk(
                     id=str(uuid4()),

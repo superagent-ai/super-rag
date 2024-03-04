@@ -52,9 +52,7 @@ class EmbeddingService:
         )
 
     def _get_strategy(self, type: str) -> Optional[str]:
-        strategies = {
-            "PDF": "auto",
-        }
+        strategies = {"PDF": "auto", "CSV": "auto"}
         try:
             return strategies[type]
         except KeyError:
@@ -80,9 +78,10 @@ class EmbeddingService:
         #     strategy = "auto"
 
         logger.info(
-            f"Downloading and extracting elements from {file.url},"
+            f"Downloading and extracting elements from {file.url}, "
             f"using `{strategy}` strategy"
         )
+        print(file.suffix)
         with NamedTemporaryFile(suffix=file.suffix, delete=True) as temp_file:
             with requests.get(url=file.url) as response:
                 temp_file.write(response.content)
@@ -173,7 +172,6 @@ class EmbeddingService:
                             ),
                         }
                         chunks.append(chunk_data)
-
                 if config.splitter.name == "semantic":
                     elements = await self._partition_file(
                         file,

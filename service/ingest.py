@@ -14,6 +14,7 @@ async def handle_urls(
 ):
     embedding_service.files = files
     chunks = await embedding_service.generate_chunks(config=config)
+    print(chunks)
     summary_documents = await embedding_service.generate_summary_documents(
         documents=chunks
     )

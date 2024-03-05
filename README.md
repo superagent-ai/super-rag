@@ -56,6 +56,8 @@ Easiset way to get started is to use our [Cloud API](https://d3jvqvcd9u4534.clou
     ```bash
     uvicorn main:app --reload
     ```
+## 🤖 Interpreter mode
+Super-Rag has built in support for running computational Q&A using code interpreters powered by [E2B.dev](https://e2b.dev) custom runtimes. You can signup to receive an API key to leverage they sandboxes in a cloud environment or setup your own by following [these instructions](https://github.com/e2b-dev/infra). 
 
 ## 🚀 How to use 
 Super-Rag comes with a built in REST API powered by FastApi. 

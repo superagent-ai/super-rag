@@ -157,12 +157,14 @@ Super-Rag comes with a built in REST API powered by FastApi.
 - Cohere
 - HuggingFace
 - FastEmbed
+- Mistral (coming soon)
+- Anthropic (coming soon)
 
 
 ## 🗃 Supported vector databases
-- Weaviate
 - Pinecone
 - Qdrant
 - Weaviate
 - Astra
 - Supabase (coming soon)
+- Chroma (coming soon)

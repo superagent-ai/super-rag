@@ -35,16 +35,22 @@ async def ingest(payload: RequestPayload) -> Dict:
             embedding_service, payload.google_drive
         )  # type: ignore TODO: Fix typing
 
-    await asyncio.gather(
+    tasks = [
         embedding_service.embed_and_upsert(
             chunks=chunks, encoder=encoder, index_name=payload.index_name
         ),
-        embedding_service.embed_and_upsert(
-            chunks=summary_documents,
-            encoder=encoder,
-            index_name=f"{payload.index_name}{SUMMARY_SUFFIX}",
-        ),
-    )
+    ]
+
+    if summary_documents and all(item is not None for item in summary_documents):
+        tasks.append(
+            embedding_service.embed_and_upsert(
+                chunks=summary_documents,
+                encoder=encoder,
+                index_name=f"{payload.index_name}{SUMMARY_SUFFIX}",
+            )
+        )
+
+    await asyncio.gather(*tasks)
 
     if payload.webhook_url:
         async with aiohttp.ClientSession() as session:

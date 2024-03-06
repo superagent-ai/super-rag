@@ -142,6 +142,7 @@ class CodeInterpreterService:
     ) -> str:
         content = self.generate_prompt(query=query)
         completion = await client.chat.completions.create(
+            temperature=0,
             messages=[
                 {
                     "role": "system",

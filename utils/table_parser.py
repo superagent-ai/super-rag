@@ -14,7 +14,7 @@ class TableParser(HTMLParser):
         self.rows = []
         self.capture_next_row_as_title = True
 
-    def handle_starttag(self, tag, attrs):
+    def handle_starttag(self, tag, _attrs):
         if tag == "table":
             self.in_table = True
         elif tag == "thead":

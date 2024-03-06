@@ -161,6 +161,7 @@ Super-Rag comes with a built in REST API powered by FastApi.
 
 ## 🗃 Supported vector databases
 - Weaviate
+- Pinecone
 - Qdrant
 - Weaviate
 - Astra

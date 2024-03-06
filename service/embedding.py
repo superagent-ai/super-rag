@@ -81,7 +81,6 @@ class EmbeddingService:
             f"Downloading and extracting elements from {file.url}, "
             f"using `{strategy}` strategy"
         )
-        print(file.suffix)
         with NamedTemporaryFile(suffix=file.suffix, delete=True) as temp_file:
             with requests.get(url=file.url) as response:
                 temp_file.write(response.content)
@@ -157,6 +156,7 @@ class EmbeddingService:
     ) -> List[BaseDocumentChunk]:
         doc_chunks = []
         for file in tqdm(self.files, desc="Generating chunks"):
+            logger.info(f"Splitting method: {config.splitter.name}")
             try:
                 chunks = []
                 if config.splitter.name == "by_title":
@@ -247,8 +247,17 @@ class EmbeddingService:
         ) -> List[BaseDocumentChunk]:
             async with sem:
                 try:
-                    texts = [chunk.content for chunk in chunks_batch]
-                    embeddings = encoder(texts)
+                    chunk_texts = []
+                    for chunk in chunks_batch:
+                        if not chunk:
+                            logger.warning("Empty chunk encountered")
+                            continue
+                        chunk_texts.append(chunk.content)
+
+                    if not chunk_texts:
+                        logger.warning(f"No content to embed in batch {chunks_batch}")
+                        return []
+                    embeddings = encoder(chunk_texts)
                     for chunk, embedding in zip(chunks_batch, embeddings):
                         chunk.dense_embedding = np.array(embedding).tolist()
                     pbar.update(len(chunks_batch))  # Update the progress bar

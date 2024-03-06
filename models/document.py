@@ -13,9 +13,9 @@ class BaseDocument(BaseModel):
 
 class BaseDocumentChunk(BaseModel):
     id: str
-    doc_url: str | None = None
     document_id: str
     content: str
+    doc_url: str | None = None
     source: str | None = None
     source_type: str | None = None
     chunk_index: int | None = None

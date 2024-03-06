@@ -24,7 +24,7 @@
 
 ## ☁️ Cloud API 
 
-Easiset way to get started is to use our [Cloud API](https://d3jvqvcd9u4534.cloudfront.net). This API is free to use (within reasonable limits).
+Easiest way to get started is to use our [Cloud API](https://d3jvqvcd9u4534.cloudfront.net). This API is free to use (within reasonable limits).
 
 ## 📦  Installation
 

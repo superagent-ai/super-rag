@@ -15,6 +15,8 @@ class WeaviateService(BaseVectorDatabase):
     def __init__(
         self, index_name: str, dimension: int, credentials: dict, encoder: BaseEncoder
     ):
+        # According to Weaviate's documentation, index names should start with a capital letter (https://weaviate.io/developers/weaviate/config-refs/schema#introduction)
+        index_name = index_name[0].upper() + index_name[1:]
         # TODO: create index if not exists
         super().__init__(
             index_name=index_name,
@@ -77,7 +79,7 @@ class WeaviateService(BaseVectorDatabase):
         try:
             response = (
                 self.client.query.get(
-                    class_name=self.index_name.capitalize(),
+                    class_name=self.index_name,
                     properties=["document_id", "text", "doc_url", "page_number"],
                 )
                 .with_near_vector(vector)
@@ -88,7 +90,7 @@ class WeaviateService(BaseVectorDatabase):
                 logger.error(f"Missing 'data' in response: {response}")
                 return []
 
-            result_data = response["data"]["Get"][self.index_name.capitalize()]
+            result_data = response["data"]["Get"][self.index_name]
             document_chunks = []
             for result in result_data:
                 document_chunk = BaseDocumentChunk(

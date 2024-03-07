@@ -44,7 +44,9 @@ async def get_documents(
     if not len(chunks):
         logger.error(f"No documents found for query: {payload.input}")
         return []
-    is_structured = chunks[0].metadata.get("filetype") in STRUCTURED_DATA
+    is_structured = (
+        chunks[0].metadata and chunks[0].metadata.get("filetype") in STRUCTURED_DATA
+    )
     reranked_chunks = []
     if is_structured and payload.interpreter_mode:
         async with CodeInterpreterService(

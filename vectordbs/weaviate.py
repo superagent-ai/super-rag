@@ -77,7 +77,7 @@ class WeaviateService(BaseVectorDatabase):
         try:
             response = (
                 self.client.query.get(
-                    class_name=self.index_name.capitalize(),
+                    class_name=self.index_name,
                     properties=["document_id", "text", "doc_url", "page_number"],
                 )
                 .with_near_vector(vector)
@@ -88,7 +88,7 @@ class WeaviateService(BaseVectorDatabase):
                 logger.error(f"Missing 'data' in response: {response}")
                 return []
 
-            result_data = response["data"]["Get"][self.index_name.capitalize()]
+            result_data = response["data"]["Get"][self.index_name]
             document_chunks = []
             for result in result_data:
                 document_chunk = BaseDocumentChunk(

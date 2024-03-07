@@ -188,6 +188,8 @@ class UnstructuredSemanticSplitter:
                             # TODO: Think of how to pass this to LLM
                             metadata={"table_content": table, **metadata},
                         )
+                else:
+                    accumulated_element_texts.append(element.get("text"))
 
             # Process any remaining accumulated text after the last table
             # or if no table was encountered

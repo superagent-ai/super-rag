@@ -113,8 +113,9 @@ class CodeInterpreterService:
         prompts = []
         dataframes = self.get_dataframe()
         for url, df in dataframes.items():
-            prompts.append(textwrap.dedent(
-                f"""
+            prompts.append(
+                textwrap.dedent(
+                    f"""
                 You are provided with a following pandas dataframe (`df`):
                 {df.info()}
 
@@ -131,7 +132,8 @@ class CodeInterpreterService:
                 3. Output: Returning the answer as a string
                 ```
                 """
-            ))
+                )
+            )
         return prompts
 
     def extract_code(self, code: str) -> str:

@@ -1,4 +1,5 @@
 venv
+env
 .venv
 .env
 .vscode

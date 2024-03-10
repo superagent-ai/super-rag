@@ -31,7 +31,7 @@ python-dotenv = "^1.0.1"
 e2b = "^0.14.7"
 gunicorn = "^21.2.0"
 unstructured-client = "^0.18.0"
-unstructured = {extras = ["google-drive"], version = "^0.12.4"}
+unstructured = {version = "0.12.5", extras = ["all-docs"]}
 tiktoken = "^0.6.0"
 
 [tool.poetry.group.dev.dependencies]

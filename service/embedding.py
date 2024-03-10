@@ -24,6 +24,8 @@ from service.splitter import UnstructuredSemanticSplitter
 from utils.logger import logger
 from utils.summarise import completion
 from vectordbs import get_vector_service
+from unstructured import chunking
+from unstructured.partition import auto
 
 # TODO: Add similarity score to the BaseDocumentChunk
 # TODO: Add relevance score to the BaseDocumentChunk
@@ -185,6 +187,19 @@ class EmbeddingService:
                         max_split_tokens=config.splitter.max_tokens,
                     )
                     chunks = await splitter_config(elements=elements)
+                if config.splitter.name == "basic":
+                    unstructured_elements = auto.partition(
+                        file_filename=file.name,
+                        url=file.url,
+                        include_page_breaks=True,
+                        strategy=config.unstructured.partition_strategy,
+                    )
+                    
+                    chunks = chunking.chunk_elements(
+                        elements=unstructured_elements,
+                        max_characters=config.splitter.max_tokens,
+                        new_after_n_chars=config.splitter.max_tokens,
+                    )
 
                 if not chunks:
                     continue
@@ -192,15 +207,22 @@ class EmbeddingService:
                 document_id = f"doc_{uuid.uuid4()}"
                 document_content = ""
                 for chunk in chunks:
-                    document_content += chunk.get("content", "")
+                    if config.splitter.name == "basic":
+                        document_content += str(chunk)
+                    else:
+                        document_content += chunk.get("content", "")
+
                     chunk_id = str(uuid.uuid4())
 
-                    if config.splitter.prefix_title:
+                    if config.splitter.prefix_title and config.splitter.name == "semantic":
                         content = (
                             f"{chunk.get('title', '')}\n{chunk.get('content', '')}"
                         )
+                    elif config.splitter.name == "basic":
+                        content = str(chunk)
                     else:
                         content = chunk.get("content", "")
+    
                     doc_chunk = BaseDocumentChunk(
                         id=chunk_id,
                         doc_url=file.url,
@@ -208,10 +230,10 @@ class EmbeddingService:
                         content=content,
                         source=file.url,
                         source_type=file.suffix,
-                        chunk_index=chunk.get("chunk_index", None),
-                        title=chunk.get("title", None),
-                        token_count=self._tiktoken_length(chunk.get("content", "")),
-                        metadata=self._sanitize_metadata(chunk.get("metadata", {})),
+                        chunk_index=chunk.get("chunk_index", None) if not config.splitter.name == "basic" else None,
+                        title=chunk.get("title", None) if not config.splitter.name == "basic" else None,
+                        token_count=chunk.get("token_count", None) if not config.splitter.name == "basic" else self._tiktoken_length(content),
+                        metadata=self._sanitize_metadata(chunk.get("metadata", {})) if not config.splitter.name == "basic" else {},
                     )
                     doc_chunks.append(doc_chunk)
 
@@ -302,7 +324,10 @@ class EmbeddingService:
         pbar = tqdm(total=len(documents), desc="Grouping chunks")
         pages = {}
         for document in documents:
-            page_number = document.metadata.get("page_number", None)
+            if not document.metadata:
+                page_number = documents.index(document)
+            else:
+               page_number = document.metadata.get("page_number", None)
             if page_number not in pages:
                 pages[page_number] = copy.deepcopy(document)
             else:

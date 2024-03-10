@@ -57,12 +57,12 @@ class UnstructuredConfig(BaseModel):
 
 
 class SplitterConfig(BaseModel):
-    name: Literal["semantic", "by_title"] = Field(
-        default="semantic", description="Splitter name, `semantic` or `by_title`"
+    name: Literal["semantic", "by_title", "basic"] = Field(
+        default="semantic", description="Splitter name, `semantic`, `by_title` or `basic`"
     )
     min_tokens: int = Field(default=30, description="Only for `semantic` method")
     max_tokens: int = Field(
-        default=400, description="Only for `semantic` and `recursive` methods"
+        default=400, description="Only for `semantic` ,`recursive` and `basic` methods"
     )
     rolling_window_size: int = Field(
         default=1,

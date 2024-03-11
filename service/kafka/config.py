@@ -1,6 +1,5 @@
 from decouple import config
 
-
 ingest_topic = config("KAFKA_TOPIC_INGEST", default="ingestion")
 
 

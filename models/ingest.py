@@ -4,10 +4,10 @@ from typing import List, Literal, Optional
 from pydantic import BaseModel, Field
 from semantic_router.encoders import BaseEncoder, CohereEncoder, OpenAIEncoder
 
+from models.api import ApiError
 from models.file import File
 from models.google_drive import GoogleDrive
 from models.vector_database import VectorDatabase
-from models.api import ApiError
 
 
 class EncoderProvider(str, Enum):

@@ -1,5 +1,7 @@
-from redis import Redis
 import json
+
+from redis import Redis
+
 from models.ingest import IngestTaskResponse
 
 

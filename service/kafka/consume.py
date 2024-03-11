@@ -1,13 +1,13 @@
 import asyncio
-from api.ingest import ingest as _ingest, IngestPayload
-
-
-from service.redis.client import redis_client
-from service.redis.ingest_task_manager import IngestTaskManager
-from service.kafka.config import ingest_topic
-from service.kafka.consumer import get_kafka_consumer
 
 from kafka.consumer.fetcher import ConsumerRecord
+
+from api.ingest import IngestPayload
+from api.ingest import ingest as _ingest
+from service.kafka.config import ingest_topic
+from service.kafka.consumer import get_kafka_consumer
+from service.redis.client import redis_client
+from service.redis.ingest_task_manager import IngestTaskManager
 
 
 async def ingest(msg: ConsumerRecord):

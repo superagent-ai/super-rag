@@ -1,6 +1,8 @@
-from kafka import KafkaConsumer
-from service.kafka.config import kafka_bootstrap_servers
 import json
+
+from kafka import KafkaConsumer
+
+from service.kafka.config import kafka_bootstrap_servers
 
 
 def get_kafka_consumer(topic: str):

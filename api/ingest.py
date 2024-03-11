@@ -2,25 +2,22 @@ import asyncio
 from typing import Dict
 
 import aiohttp
-from fastapi import APIRouter
+from fastapi import APIRouter, status
+from fastapi.responses import JSONResponse
 
-from models.ingest import RequestPayload, TaskStatus
 from models.api import ApiError
+from models.ingest import RequestPayload, TaskStatus
 from service.embedding import EmbeddingService
 from service.ingest import handle_google_drive, handle_urls
-from utils.summarise import SUMMARY_SUFFIX
-
+from service.kafka.config import ingest_topic
+from service.kafka.producer import kafka_producer
+from service.redis.client import redis_client
 from service.redis.ingest_task_manager import (
-    IngestTaskManager,
     CreateTaskDto,
+    IngestTaskManager,
     UpdateTaskDto,
 )
-from service.redis.client import redis_client
-
-from fastapi.responses import JSONResponse
-from fastapi import status
-from service.kafka.config import kafka_bootstrap_servers, ingest_topic
-from service.kafka.producer import kafka_producer
+from utils.summarise import SUMMARY_SUFFIX
 
 router = APIRouter()
 

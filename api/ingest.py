@@ -50,7 +50,11 @@ async def add_ingest_queue(payload: RequestPayload):
         return {"success": True, "task": {"id": task_id}}
 
     except Exception as err:
-        print(f"error: {err}")
+        logger.error(f"Error adding task to the queue: {err}")
+        return JSONResponse(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            content={"sucess": False, "error": {"message": "Internal server error"}},
+        )
 
 
 @router.get("/ingest/tasks/{task_id}")
@@ -58,7 +62,6 @@ async def get_task(
     task_id: str,
     long_polling: bool = False,
 ):
-    print("ALIALIALI", long_polling)
     if long_polling:
         logger.info(f"Long pooling is enabled for task {task_id}")
     else:
@@ -149,7 +152,7 @@ async def ingest(payload: IngestPayload, task_manager: IngestTaskManager) -> Dic
             ),
         )
     except Exception as e:
-        print("Marking task as failed...", e)
+        logger.error(f"Error processing ingest task: {e}")
         task_manager.update(
             task_id=payload.task_id,
             task=UpdateTaskDto(

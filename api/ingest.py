@@ -1,4 +1,6 @@
 import asyncio
+import time
+import logging
 from typing import Dict
 
 import aiohttp
@@ -19,7 +21,11 @@ from service.redis.ingest_task_manager import (
 )
 from utils.summarise import SUMMARY_SUFFIX
 
+
 router = APIRouter()
+
+
+logger = logging.getLogger(__name__)
 
 
 class IngestPayload(RequestPayload):
@@ -31,7 +37,6 @@ async def add_ingest_queue(payload: RequestPayload):
     try:
         task_manager = IngestTaskManager(redis_client)
         task_id = task_manager.create(CreateTaskDto(status=TaskStatus.PENDING))
-        print("Task ID: ", task_id)
 
         message = IngestPayload(**payload.model_dump(), task_id=str(task_id))
 
@@ -40,25 +45,54 @@ async def add_ingest_queue(payload: RequestPayload):
         kafka_producer.send(ingest_topic, msg)
         kafka_producer.flush()
 
-        return {"success": True, "task_id": task_id}
+        logger.info(f"Task {task_id} added to the queue")
+
+        return {"success": True, "task": {"id": task_id}}
 
     except Exception as err:
         print(f"error: {err}")
 
 
 @router.get("/ingest/tasks/{task_id}")
-async def get_task(task_id: str):
+async def get_task(
+    task_id: str,
+    long_polling: bool = False,
+):
+    print("ALIALIALI", long_polling)
+    if long_polling:
+        logger.info(f"Long pooling is enabled for task {task_id}")
+    else:
+        logger.info(f"Long pooling is disabled for task {task_id}")
+
     task_manager = IngestTaskManager(redis_client)
 
-    task = task_manager.get(task_id)
+    if not long_polling:
+        task = task_manager.get(task_id)
+        if not task:
+            logger.warning(f"Task {task_id} not found")
+            return JSONResponse(
+                status_code=status.HTTP_404_NOT_FOUND,
+                content={"sucess": False, "error": {"message": "Task not found"}},
+            )
 
-    if task:
-        return task
+        return {"success": True, "task": task.model_dump()}
 
-    return JSONResponse(
-        status_code=status.HTTP_404_NOT_FOUND,
-        content={"sucess": False, "error": {"message": "Task not found"}},
-    )
+    else:
+        timeout_time = time.time() + 30  #  30 seconds from now
+        sleep_interval = 3  # seconds
+
+        while time.time() < timeout_time:
+            task = task_manager.get(task_id)
+            if task.status != TaskStatus.PENDING:
+                return {"success": True, "task": task.model_dump()}
+            await asyncio.sleep(sleep_interval)
+
+        logger.warning(f"Request timeout for task {task_id}")
+
+        return JSONResponse(
+            status_code=status.HTTP_408_REQUEST_TIMEOUT,
+            content={"sucess": False, "error": {"message": "Request timeout"}},
+        )
 
 
 async def ingest(payload: IngestPayload, task_manager: IngestTaskManager) -> Dict:

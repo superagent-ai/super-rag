@@ -90,7 +90,7 @@ async def get_task(
             task = task_manager.get(task_id)
 
             if task is None:
-                handle_task_not_found(task_id)
+                return handle_task_not_found(task_id)
 
             if task.status != TaskStatus.PENDING:
                 return {"success": True, "task": task.model_dump()}

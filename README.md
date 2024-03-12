@@ -55,7 +55,18 @@ Easiest way to get started is to use our [Cloud API](https://d3jvqvcd9u4534.clou
 5. Run server
     ```bash
     uvicorn main:app --reload
+    ``` 
+6. Start Kafka & Redis
+    ```bash
+    docker compose up -d
     ```
+7. Start Kafka consumer
+    ```bash
+    cd ./service/kafka & python3 ./consume.py
+    ```
+
+
+
 ## 🤖 Interpreter mode
 Super-Rag has built in support for running computational Q&A using code interpreters powered by [E2B.dev](https://e2b.dev) custom runtimes. You can signup to receive an API key to leverage they sandboxes in a cloud environment or setup your own by following [these instructions](https://github.com/e2b-dev/infra). 
 

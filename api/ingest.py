@@ -81,10 +81,11 @@ async def get_task(
         return {"success": True, "task": task.model_dump()}
 
     else:
-        timeout_time = time.time() + 30  #  30 seconds from now
+        start_time = time.time()
+        timeout_time = start_time + 30  #  30 seconds from now
         sleep_interval = 3  # seconds
 
-        while time.time() < timeout_time:
+        while start_time < timeout_time:
             task = task_manager.get(task_id)
             if task.status != TaskStatus.PENDING:
                 return {"success": True, "task": task.model_dump()}

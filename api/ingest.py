@@ -69,17 +69,18 @@ async def get_task(
 
     task_manager = IngestTaskManager(redis_client)
 
+    def handle_task_not_found(task_id: str):
+        logger.warning(f"Task {task_id} not found")
+        return JSONResponse(
+            status_code=status.HTTP_404_NOT_FOUND,
+            content={"success": False, "error": {"message": "Task not found"}},
+        )
+
     if not long_polling:
         task = task_manager.get(task_id)
         if not task:
-            logger.warning(f"Task {task_id} not found")
-            return JSONResponse(
-                status_code=status.HTTP_404_NOT_FOUND,
-                content={"sucess": False, "error": {"message": "Task not found"}},
-            )
-
+            return handle_task_not_found(task_id)
         return {"success": True, "task": task.model_dump()}
-
     else:
         start_time = time.time()
         timeout_time = start_time + 30  #  30 seconds from now
@@ -87,6 +88,10 @@ async def get_task(
 
         while start_time < timeout_time:
             task = task_manager.get(task_id)
+
+            if task is None:
+                handle_task_not_found(task_id)
+
             if task.status != TaskStatus.PENDING:
                 return {"success": True, "task": task.model_dump()}
             await asyncio.sleep(sleep_interval)

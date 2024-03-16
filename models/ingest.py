@@ -4,6 +4,7 @@ from typing import List, Literal, Optional
 from pydantic import BaseModel, Field
 from semantic_router.encoders import BaseEncoder, CohereEncoder, OpenAIEncoder
 
+from models.api import ApiError
 from models.file import File
 from models.google_drive import GoogleDrive
 from models.vector_database import VectorDatabase
@@ -90,3 +91,14 @@ class RequestPayload(BaseModel):
     files: Optional[List[File]] = None
     google_drive: Optional[GoogleDrive] = None
     webhook_url: Optional[str] = None
+
+
+class TaskStatus(str, Enum):
+    DONE = "DONE"
+    PENDING = "PENDING"
+    FAILED = "FAILED"
+
+
+class IngestTaskResponse(BaseModel):
+    status: TaskStatus
+    error: Optional[ApiError] = None

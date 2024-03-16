@@ -58,7 +58,7 @@ Easiest way to get started is to use our [Cloud API](https://d3jvqvcd9u4534.clou
     ``` 
 6. Start Kafka & Redis
     ```bash
-    docker compose up -d
+    docker compose -f docker-compose.dev.yml up -d
     ```
 7. Start Kafka consumer
     ```bash

@@ -166,5 +166,5 @@ Super-Rag comes with a built in REST API powered by FastApi.
 - Qdrant
 - Weaviate
 - Astra
-- Supabase (coming soon)
+- PGVector
 - Chroma (coming soon)

@@ -9,6 +9,7 @@ class DatabaseType(Enum):
     pinecone = "pinecone"
     weaviate = "weaviate"
     astra = "astra"
+    pgvector = "pgvector"
 
 
 class VectorDatabase(BaseModel):

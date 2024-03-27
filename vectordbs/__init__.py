@@ -10,6 +10,7 @@ from vectordbs.base import BaseVectorDatabase
 from vectordbs.pinecone import PineconeService
 from vectordbs.qdrant import QdrantService
 from vectordbs.weaviate import WeaviateService
+from vectordbs.pgvector import PGVectorService
 
 load_dotenv()
 
@@ -26,6 +27,7 @@ def get_vector_service(
         "qdrant": QdrantService,
         "weaviate": WeaviateService,
         "astra": AstraService,
+        "pgvector": PGVectorService,
         # Add other providers here
         # e.g "weaviate": WeaviateVectorService,
     }

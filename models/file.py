@@ -15,6 +15,7 @@ class FileType(Enum):
     html = "HTML"
     json = "JSON"
     eml = "EML"
+    msg = "MSG"
 
     def suffix(self) -> str:
         suffixes = {
@@ -28,6 +29,7 @@ class FileType(Enum):
             "HTML": ".html",
             "JSON": ".json",
             "EML": ".eml",
+            "MSG": ".msg",
         }
         return suffixes[self.value]
 

@@ -45,7 +45,7 @@ class QdrantService(BaseVectorDatabase):
             {
                 "content": chunk.payload.get("content"),
                 "page_label": chunk.payload.get("page_label"),
-                "file_url": chunk.payload.get("file_url"),
+                "doc_url": chunk.payload.get("doc_url"),
             }
             for chunk in chunks
         ]
@@ -92,22 +92,12 @@ class QdrantService(BaseVectorDatabase):
         ]
 
     async def delete(self, file_url: str) -> None:
-        #         client.count(
-        #     collection_name="{collection_name}",
-        #     count_filter=models.Filter(
-        #         must=[
-        #             models.FieldCondition(key="color", match=models.MatchValue(value="red")),
-        #         ]
-        #     ),
-        #     exact=True,
-        # )
-
         deleted_chunks = self.client.count(
             collection_name=self.index_name,
             count_filter=rest.Filter(
                 must=[
                     rest.FieldCondition(
-                        key="file_url", match=rest.MatchValue(value=file_url)
+                        key="doc_url", match=rest.MatchValue(value=file_url)
                     )
                 ]
             ),
@@ -120,7 +110,7 @@ class QdrantService(BaseVectorDatabase):
                 filter=rest.Filter(
                     must=[
                         rest.FieldCondition(
-                            key="file_url", match=rest.MatchValue(value=file_url)
+                            key="doc_url", match=rest.MatchValue(value=file_url)
                         )
                     ]
                 )

@@ -41,6 +41,8 @@ async def get_documents(
     *, vector_service: BaseVectorDatabase, payload: RequestPayload
 ) -> list[BaseDocumentChunk]:
     chunks = await vector_service.query(input=payload.input, top_k=5)
+    # filter out documents with empty content
+    chunks = [chunk for chunk in chunks if chunk.content.strip()]
     if not len(chunks):
         logger.error(f"No documents found for query: {payload.input}")
         return []

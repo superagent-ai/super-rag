@@ -7,6 +7,7 @@ from tqdm import tqdm
 
 from models.delete import DeleteResponse
 from models.document import BaseDocumentChunk
+from models.query import Filter
 from utils.logger import logger
 
 
@@ -24,7 +25,9 @@ class BaseVectorDatabase(ABC):
         pass
 
     @abstractmethod
-    async def query(self, input: str, top_k: int = 25) -> List[BaseDocumentChunk]:
+    async def query(
+        self, input: str, filter: Filter, top_k: int = 25
+    ) -> List[BaseDocumentChunk]:
         pass
 
     @abstractmethod

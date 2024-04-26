@@ -40,7 +40,9 @@ def create_route_layer() -> RouteLayer:
 async def get_documents(
     *, vector_service: BaseVectorDatabase, payload: RequestPayload
 ) -> list[BaseDocumentChunk]:
-    chunks = await vector_service.query(input=payload.input, top_k=5)
+    chunks = await vector_service.query(
+        input=payload.input, filter=payload.filter, top_k=5
+    )
     # filter out documents with empty content
     chunks = [chunk for chunk in chunks if chunk.content.strip()]
     if not len(chunks):

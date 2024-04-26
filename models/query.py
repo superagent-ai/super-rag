@@ -1,10 +1,10 @@
-from typing import List, Optional
-
 from pydantic import BaseModel
+from typing import List, Optional
 
 from models.document import BaseDocumentChunk
 from models.ingest import EncoderConfig
 from models.vector_database import VectorDatabase
+from qdrant_client.http.models import Filter
 
 
 class RequestPayload(BaseModel):
@@ -15,6 +15,8 @@ class RequestPayload(BaseModel):
     session_id: Optional[str] = None
     interpreter_mode: Optional[bool] = False
     exclude_fields: List[str] = None
+    # TODO: use our own Filter model
+    filter: Optional[Filter] = None
 
 
 class ResponseData(BaseModel):

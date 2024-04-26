@@ -1,4 +1,4 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, RootModel
 from typing import List, Optional, Union, Any
 
 from models.document import BaseDocumentChunk
@@ -7,26 +7,7 @@ from models.vector_database import VectorDatabase
 from qdrant_client.http.models import Filter as QdrantFilter
 
 
-class PineconeFilter(BaseModel):
-    __root__: dict[str, Union[str, float, int, bool, List, dict]]
-
-
-class AstraFilter(BaseModel):
-    __root__: dict[str, Any]
-
-
-class WeaviateFilter(BaseModel):
-    __root__: dict
-
-
-class PgVectorFilter(BaseModel):
-    __root__: dict
-
-
-class Filter(BaseModel):
-    __root__: Union[
-        PineconeFilter, QdrantFilter, WeaviateFilter, AstraFilter, PgVectorFilter
-    ]
+Filter = Union[QdrantFilter, dict]
 
 
 class RequestPayload(BaseModel):

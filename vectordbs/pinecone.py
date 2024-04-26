@@ -6,6 +6,7 @@ from tqdm import tqdm
 
 from models.delete import DeleteResponse
 from models.document import BaseDocumentChunk
+from models.query import Filter
 from utils.logger import logger
 from vectordbs.base import BaseVectorDatabase
 
@@ -52,7 +53,11 @@ class PineconeService(BaseVectorDatabase):
             raise
 
     async def query(
-        self, input: str, top_k: int = 25, include_metadata: bool = True
+        self,
+        input: str,
+        filter: Filter = None,
+        top_k: int = 25,
+        include_metadata: bool = True,
     ) -> list[BaseDocumentChunk]:
         if self.index is None:
             raise ValueError(f"Pinecone index {self.index_name} is not initialized.")
@@ -61,6 +66,7 @@ class PineconeService(BaseVectorDatabase):
             vector=query_vectors[0],
             top_k=top_k,
             include_metadata=include_metadata,
+            filter=filter,
         )
         chunks = []
         if results.get("matches"):

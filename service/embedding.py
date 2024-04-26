@@ -156,6 +156,7 @@ class EmbeddingService:
     ) -> List[BaseDocumentChunk]:
         doc_chunks = []
         for file in tqdm(self.files, desc="Generating chunks"):
+            file_metadata = file.metadata or {}
             logger.info(f"Splitting method: {config.splitter.name}")
             try:
                 chunks = []
@@ -168,7 +169,10 @@ class EmbeddingService:
                         chunk_data = {
                             "content": element.get("text"),
                             "metadata": self._sanitize_metadata(
-                                element.get("metadata")
+                                {
+                                    **file_metadata,
+                                    **element.get("metadata"),
+                                }
                             ),
                         }
                         chunks.append(chunk_data)

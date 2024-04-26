@@ -37,6 +37,7 @@ class FileType(Enum):
 class File(BaseModel):
     url: str
     name: str | None = None
+    metadata: dict | None = None
 
     @property
     def type(self) -> FileType | None:

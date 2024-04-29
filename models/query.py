@@ -1,5 +1,5 @@
-from pydantic import BaseModel, RootModel
-from typing import List, Optional, Union, Any
+from pydantic import BaseModel
+from typing import List, Optional, Union
 
 from models.document import BaseDocumentChunk
 from models.ingest import EncoderConfig

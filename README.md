@@ -71,7 +71,10 @@ Super-Rag comes with a built in REST API powered by FastApi.
     "files": [
         {
             "name": "My file", // Optional
-            "url": "https://path-to-my-file.pdf"
+            "url": "https://path-to-my-file.pdf",
+            "metadata": { // Optional
+                "key": "value"
+            }
         }
     ],
     "document_processor": { // Optional
@@ -126,6 +129,18 @@ Super-Rag comes with a built in REST API powered by FastApi.
         "provider": "cohere",
         "name": "embed-multilingual-light-v3.0",
         "dimensions": 384
+    },
+    "filter": { // Optional
+        // Each provider has its own filter schema,
+        // for Qdrant it looks like the following:
+        "must": [
+            {
+                "key": "key",
+                "match": {
+                    "value": "value"
+                }
+            }
+        ]
     },
     "exclude_fields": ["metadata"], // Exclude specific fields
     "interpreter_mode": False, // Set to True if you wish to run computation Q&A with a code interpreter

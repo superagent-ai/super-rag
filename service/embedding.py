@@ -188,7 +188,7 @@ class EmbeddingService:
                         min_split_tokens=config.splitter.min_tokens,
                         max_split_tokens=config.splitter.max_tokens,
                     )
-                    chunks = await splitter_config(elements=elements)
+                    chunks = await splitter_config(elements=elements, file=file)
 
                 if not chunks:
                     continue

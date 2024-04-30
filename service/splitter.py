@@ -8,6 +8,7 @@ from semantic_router.splitters import RollingWindowSplitter
 
 from utils.logger import logger
 from utils.table_parser import TableParser
+from models.file import File
 
 
 # TODO: Move to document processing utils, once we have
@@ -125,7 +126,11 @@ class UnstructuredSemanticSplitter:
         return grouped_elements
 
     async def split_grouped_elements(
-        self, elements: list[dict[str, Any]], splitter: RollingWindowSplitter
+        self,
+        *,
+        elements: list[dict[str, Any]],
+        file: File,
+        splitter: RollingWindowSplitter,
     ) -> list[dict[str, Any]]:
         grouped_elements = self._group_elements_by_title(elements)
         chunks_with_title = []
@@ -138,7 +143,10 @@ class UnstructuredSemanticSplitter:
                     "title": title,
                     "content": content,
                     "chunk_index": chunk_index,
-                    "metadata": metadata,
+                    "metadata": {
+                        **file.metadata,
+                        **metadata,
+                    },
                 }
             )
 
@@ -207,5 +215,9 @@ class UnstructuredSemanticSplitter:
                 chunks_with_title.extend(chunks)
         return chunks_with_title
 
-    async def __call__(self, elements: list[dict[str, Any]]) -> list[dict[str, Any]]:
-        return await self.split_grouped_elements(elements, self.splitter)
+    async def __call__(
+        self, elements: list[dict[str, Any]], file: File
+    ) -> list[dict[str, Any]]:
+        return await self.split_grouped_elements(
+            elements=elements, file=file, splitter=self.splitter
+        )

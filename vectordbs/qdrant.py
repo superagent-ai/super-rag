@@ -7,6 +7,7 @@ from tqdm import tqdm
 
 from models.delete import DeleteResponse
 from models.document import BaseDocumentChunk
+from models.query import Filter
 from vectordbs.base import BaseVectorDatabase
 
 MAX_QUERY_TOP_K = 5
@@ -69,11 +70,14 @@ class QdrantService(BaseVectorDatabase):
 
         self.client.upsert(collection_name=self.index_name, wait=True, points=points)
 
-    async def query(self, input: str, top_k: int = MAX_QUERY_TOP_K) -> List:
+    async def query(
+        self, input: str, filter: Filter, top_k: int = MAX_QUERY_TOP_K
+    ) -> List:
         vectors = await self._generate_vectors(input=input)
         search_result = self.client.search(
             collection_name=self.index_name,
             query_vector=("content", vectors[0]),
+            query_filter=filter,
             limit=top_k,
             with_payload=True,
         )

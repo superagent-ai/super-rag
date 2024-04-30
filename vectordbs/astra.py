@@ -5,6 +5,7 @@ from semantic_router.encoders import BaseEncoder
 from tqdm import tqdm
 
 from models.document import BaseDocumentChunk
+from models.query import Filter
 from vectordbs.base import BaseVectorDatabase
 
 
@@ -54,12 +55,13 @@ class AstraService(BaseVectorDatabase):
         for i in range(0, len(documents), 5):
             self.collection.insert_many(documents=documents[i : i + 5])
 
-    async def query(self, input: str, top_k: int = 4) -> List:
+    async def query(self, input: str, filter: Filter = None, top_k: int = 4) -> List:
         vectors = await self._generate_vectors(input=input)
         results = self.collection.vector_find(
             vector=vectors[0],
             limit=top_k,
             fields={"text", "page_number", "source", "document_id"},
+            filter=filter,
         )
         return [
             BaseDocumentChunk(

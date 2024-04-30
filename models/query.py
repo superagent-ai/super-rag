@@ -1,10 +1,13 @@
-from typing import List, Optional
-
 from pydantic import BaseModel
+from typing import List, Optional, Union
 
 from models.document import BaseDocumentChunk
 from models.ingest import EncoderConfig
 from models.vector_database import VectorDatabase
+from qdrant_client.http.models import Filter as QdrantFilter
+
+
+Filter = Union[QdrantFilter, dict]
 
 
 class RequestPayload(BaseModel):
@@ -15,6 +18,7 @@ class RequestPayload(BaseModel):
     session_id: Optional[str] = None
     interpreter_mode: Optional[bool] = False
     exclude_fields: List[str] = None
+    filter: Optional[Filter] = None
 
 
 class ResponseData(BaseModel):

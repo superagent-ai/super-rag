@@ -7,6 +7,7 @@ from tqdm import tqdm
 from qdrant_client.http import models as rest
 from models.delete import DeleteResponse
 from models.document import BaseDocumentChunk
+from models.query import Filter
 from vectordbs.base import BaseVectorDatabase
 
 MAX_QUERY_TOP_K = 5
@@ -58,7 +59,9 @@ class PGVectorService(BaseVectorDatabase):
         self.collection.upsert(records)
         self.collection.create_index()
 
-    async def query(self, input: str, top_k: int = MAX_QUERY_TOP_K) -> List:
+    async def query(
+        self, input: str, filter: Filter = None, top_k: int = MAX_QUERY_TOP_K
+    ) -> List:
         vectors = await self._generate_vectors(input=input)
 
         results = self.collection.query(
@@ -66,6 +69,7 @@ class PGVectorService(BaseVectorDatabase):
             limit=top_k,
             include_metadata=True,
             include_value=False,
+            filters=filter.model_dump() if filter else {},
         )
 
         chunks = []

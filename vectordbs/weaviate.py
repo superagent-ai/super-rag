@@ -10,6 +10,8 @@ from models.document import BaseDocumentChunk
 from utils.logger import logger
 from vectordbs.base import BaseVectorDatabase
 
+from models.query import Filter
+
 
 class WeaviateService(BaseVectorDatabase):
     def __init__(
@@ -72,7 +74,9 @@ class WeaviateService(BaseVectorDatabase):
                 batch.add_data_object(**vector_data)
             batch.flush()
 
-    async def query(self, input: str, top_k: int = 25) -> list[BaseDocumentChunk]:
+    async def query(
+        self, input: str, filter: Filter = {}, top_k: int = 25
+    ) -> list[BaseDocumentChunk]:
         vectors = await self._generate_vectors(input=input)
         vector = {"vector": vectors[0]}
 
@@ -84,6 +88,7 @@ class WeaviateService(BaseVectorDatabase):
                 )
                 .with_near_vector(vector)
                 .with_limit(top_k)
+                .with_where(filter)
                 .do()
             )
             if "data" not in response:
